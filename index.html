@@ -1,519 +1,56 @@
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#667eea" />
   <title>PestCalc Pro</title>
-  <style>
-    /* Stile originale preservato e migliorato */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      background: #f0f4ff;
-      color: #333;
-      line-height: 1.6;
-    }
-    
-    .app-container {
-      padding: 25px;
-      max-width: 650px;
-      margin: 0 auto;
-      background: white;
-      box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
-      border-radius: 15px;
-      margin-top: 20px;
-      margin-bottom: 40px;
-    }
-    
-    header {
-      text-align: center;
-      padding: 20px 0 30px;
-      border-bottom: 1px solid #e0e7ff;
-      margin-bottom: 30px;
-    }
-    
-    h1 {
-      color: #4a63e7;
-      font-size: 2.2rem;
-      margin-bottom: 10px;
-      background: linear-gradient(90deg, #4a63e7, #6c5ce7);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    
-    .tagline {
-      color: #666;
-      font-size: 1.1rem;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-    
-    section {
-      margin-bottom: 35px;
-      padding: 25px;
-      background: #f8faff;
-      border-radius: 12px;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-      border-left: 4px solid #4a63e7;
-      transition: transform 0.3s ease;
-    }
-    
-    section:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    }
-    
-    h2 {
-      color: #4a63e7;
-      margin-top: 0;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 1.4rem;
-    }
-    
-    .input-group {
-      margin-bottom: 20px;
-    }
-    
-    .input-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: #444;
-    }
-    
-    input {
-      width: 100%;
-      padding: 14px;
-      border: 1px solid #d0d7ff;
-      border-radius: 8px;
-      font-size: 16px;
-      background: #fafbff;
-      transition: all 0.3s;
-    }
-    
-    input:focus {
-      outline: none;
-      border-color: #4a63e7;
-      box-shadow: 0 0 0 3px rgba(74, 99, 231, 0.2);
-    }
-    
-    button {
-      background: linear-gradient(90deg, #4a63e7, #6c5ce7);
-      color: white;
-      border: none;
-      padding: 14px 25px;
-      cursor: pointer;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      transition: all 0.3s;
-      width: 100%;
-      box-shadow: 0 4px 10px rgba(74, 99, 231, 0.3);
-    }
-    
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 15px rgba(74, 99, 231, 0.4);
-    }
-    
-    button:active {
-      transform: translateY(0);
-    }
-    
-    .output {
-      margin-top: 20px;
-      padding: 18px;
-      border-radius: 8px;
-      background: #f0f4ff;
-      font-weight: 500;
-      white-space: pre-line;
-      border-left: 4px solid #4a63e7;
-      animation: fadeIn 0.5s ease;
-      font-size: 16px;
-      line-height: 1.7;
-    }
-    
-    .output.error {
-      background: #ffebee;
-      color: #c62828;
-      border-left-color: #c62828;
-    }
-    
-    .output.success {
-      background: #e8f5e9;
-      color: #2e7d32;
-      border-left-color: #2e7d32;
-    }
-    
-    .output.warning {
-      background: #fff8e1;
-      color: #f57f17;
-      border-left-color: #f57f17;
-    }
-    
-    footer {
-      text-align: center;
-      font-size: 0.9em;
-      color: #888;
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid #e0e7ff;
-    }
-    
-    .disclaimer {
-      font-size: 0.85em;
-      color: #aaa;
-      margin-top: 10px;
-      font-style: italic;
-    }
-    
-    .section-icon {
-      width: 40px;
-      height: 40px;
-      background: #4a63e7;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 20px;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @media (max-width: 600px) {
-      .app-container {
-        padding: 15px;
-      }
-      
-      section {
-        padding: 20px;
-      }
-      
-      h1 {
-        font-size: 1.8rem;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app-container">
     <header>
       <h1>PestCalc Pro</h1>
-      <p class="tagline">Calcolatore professionale per disinfestatori</p>
+      <p>Calcolatore professionale per disinfestatori</p>
     </header>
 
     <section id="diluizione">
-      <h2><div class="section-icon">💧</div> Calcolo Diluizione</h2>
-      <div class="input-group">
-        <label for="concentrazione">Concentrazione principio attivo (%)</label>
-        <input type="number" id="concentrazione" min="0.1" max="100" step="0.1" placeholder="Es: 5.5">
-      </div>
-      <div class="input-group">
-        <label for="volume">Volume soluzione finale (ml)</label>
-        <input type="number" id="volume" min="10" step="1" placeholder="Es: 1000">
-      </div>
+      <h2>💧 Calcolo Diluizione</h2>
+      <input type="number" id="concentrazione" placeholder="% principio attivo" />
+      <input type="number" id="volume" placeholder="Volume soluzione finale (ml)" />
       <button onclick="calcolaDiluizione()">Calcola</button>
       <div id="output-diluizione" class="output"></div>
     </section>
 
     <section id="saturazione">
-      <h2><div class="section-icon">🏠</div> Saturazione Ambientale</h2>
-      <div class="input-group">
-        <label for="mq">Metri quadri da trattare</label>
-        <input type="number" id="mq" min="1" step="0.1" placeholder="Es: 50">
-      </div>
-      <div class="input-group">
-        <label for="dose">Dose di prodotto (ml/m²)</label>
-        <input type="number" id="dose" min="1" step="1" placeholder="Es: 20">
-      </div>
+      <h2>🏠 Saturazione Ambientale</h2>
+      <input type="number" id="mq" placeholder="Metri quadri" />
+      <input type="number" id="dose" placeholder="ml/mq" />
       <button onclick="calcolaSaturazione()">Calcola</button>
       <div id="output-saturazione" class="output"></div>
     </section>
 
     <section id="fumigazione">
-      <h2><div class="section-icon">☁️</div> Fumigazione</h2>
-      <div class="input-group">
-        <label for="mc">Volume ambiente (m³)</label>
-        <input type="number" id="mc" min="1" step="1" placeholder="Es: 100">
-      </div>
-      <div class="input-group">
-        <label for="dose-fumo">Dose fumigante (ml/m³)</label>
-        <input type="number" id="dose-fumo" min="1" step="1" placeholder="Es: 10">
-      </div>
+      <h2>☁️ Fumigazione</h2>
+      <input type="number" id="mc" placeholder="Metri cubi" />
+      <input type="number" id="dose-fumo" placeholder="ml/mc" />
       <button onclick="calcolaFumigazione()">Calcola</button>
       <div id="output-fumigazione" class="output"></div>
     </section>
 
     <section id="costi">
-      <h2><div class="section-icon">💰</div> Calcolo Costi</h2>
-      <div class="input-group">
-        <label for="prezzo">Prezzo per litro (€)</label>
-        <input type="number" id="prezzo" min="0" step="0.01" placeholder="Es: 25.00">
-      </div>
-      <div class="input-group">
-        <label for="mlusati">ml usati</label>
-        <input type="number" id="mlusati" min="1" step="1" placeholder="Es: 500">
-      </div>
-      <div class="input-group">
-        <label for="manodopera">Costo manodopera (€/ora)</label>
-        <input type="number" id="manodopera" min="0" step="1" placeholder="Es: 30">
-      </div>
-      <div class="input-group">
-        <label for="tempo">Tempo stimato (ore)</label>
-        <input type="number" id="tempo" min="0.1" step="0.1" placeholder="Es: 1.5">
-      </div>
+      <h2>💰 Calcolo Costi</h2>
+      <input type="number" id="prezzo" placeholder="Prezzo per litro (€)" />
+      <input type="number" id="mlusati" placeholder="ml usati" />
       <button onclick="calcolaCosti()">Calcola</button>
       <div id="output-costi" class="output"></div>
     </section>
 
     <footer>
-      <p>© 2025 PestCalc Pro | Versione 4.0 | Licenza: <a href="LICENSE.md" style="color:#4a63e7;text-decoration:none">Visualizza</a></p>
-      <p class="disclaimer">I risultati sono indicativi. Verificare sempre le schede tecniche dei prodotti.</p>
-      <p class="disclaimer">Dominio: baida98.github.io</p>
+      <p>© 2025 PestCalc Pro. Tutti i diritti riservati.</p>
     </footer>
   </div>
-
-  <script>
-    // ========== FUNZIONI DI CALCOLO CON VALIDAZIONE ========== //
-    function calcolaDiluizione() {
-      const output = document.getElementById('output-diluizione');
-      output.className = 'output';
-      
-      try {
-        const concentrazione = parseFloat(document.getElementById('concentrazione').value);
-        const volume = parseFloat(document.getElementById('volume').value);
-        
-        // Validazione
-        if (isNaN(concentrazione) throw new Error('Inserire una concentrazione valida');
-        if (isNaN(volume)) throw new Error('Inserire un volume valido');
-        if (concentrazione <= 0 || concentrazione > 100) throw new Error('Concentrazione deve essere tra 0.1% e 100%');
-        if (volume <= 0) throw new Error('Volume deve essere maggiore di 0');
-        
-        // Calcolo
-        const mlPrincipioAttivo = (concentrazione / 100) * volume;
-        const mlSolvente = volume - mlPrincipioAttivo;
-        
-        // Risultato formattato
-        let result = `🔹 ${mlPrincipioAttivo.toFixed(1)} ml di principio attivo\n`;
-        result += `🔹 ${mlSolvente.toFixed(1)} ml di solvente\n`;
-        result += `🔹 Totale: ${volume.toFixed(1)} ml di soluzione`;
-        
-        if (volume >= 1000) {
-          result += ` (${(volume/1000).toFixed(2)} L)`;
-        }
-        
-        output.textContent = result;
-        output.classList.add('success');
-        
-        // Salva input
-        salvaInput('concentrazione', concentrazione);
-        salvaInput('volume', volume);
-        
-      } catch (error) {
-        output.textContent = `❌ Errore: ${error.message}`;
-        output.classList.add('error');
-      }
-    }
-
-    function calcolaSaturazione() {
-      const output = document.getElementById('output-saturazione');
-      output.className = 'output';
-      
-      try {
-        const mq = parseFloat(document.getElementById('mq').value);
-        const dose = parseFloat(document.getElementById('dose').value);
-        
-        // Validazione
-        if (isNaN(mq)) throw new Error('Inserire metri quadri validi');
-        if (isNaN(dose)) throw new Error('Inserire una dose valida');
-        if (mq <= 0) throw new Error('Metri quadri devono essere maggiori di 0');
-        if (dose <= 0) throw new Error('Dose deve essere maggiore di 0');
-        
-        // Calcolo
-        const mlTotali = mq * dose;
-        
-        // Risultato formattato
-        let result = `🔹 Superficie: ${mq} m²\n`;
-        result += `🔹 Dose: ${dose} ml/m²\n`;
-        result += `🔹 Totale soluzione: ${mlTotali.toFixed(1)} ml`;
-        
-        if (mlTotali >= 1000) {
-          result += ` (${(mlTotali/1000).toFixed(2)} L)`;
-        }
-        
-        // Consigli pratici
-        if (mlTotali > 5000) {
-          result += `\n\n⚠️ Attenzione: Quantità elevata. Verificare la capacità dell'applicatore.`;
-          output.classList.add('warning');
-        } else {
-          output.classList.add('success');
-        }
-        
-        output.textContent = result;
-        
-        // Salva input
-        salvaInput('mq', mq);
-        salvaInput('dose', dose);
-        
-      } catch (error) {
-        output.textContent = `❌ Errore: ${error.message}`;
-        output.classList.add('error');
-      }
-    }
-
-    function calcolaFumigazione() {
-      const output = document.getElementById('output-fumigazione');
-      output.className = 'output';
-      
-      try {
-        const mc = parseFloat(document.getElementById('mc').value);
-        const doseFumo = parseFloat(document.getElementById('dose-fumo').value);
-        
-        // Validazione
-        if (isNaN(mc)) throw new Error('Inserire metri cubi validi');
-        if (isNaN(doseFumo)) throw new Error('Inserire una dose valida');
-        if (mc <= 0) throw new Error('Metri cubi devono essere maggiori di 0');
-        if (doseFumo <= 0) throw new Error('Dose fumigante deve essere maggiore di 0');
-        
-        // Calcolo
-        const mlTotali = mc * doseFumo;
-        
-        // Risultato formattato
-        let result = `🔹 Volume: ${mc} m³\n`;
-        result += `🔹 Dose: ${doseFumo} ml/m³\n`;
-        result += `🔹 Quantità fumigante: ${mlTotali.toFixed(1)} ml`;
-        
-        if (mlTotali >= 1000) {
-          result += ` (${(mlTotali/1000).toFixed(2)} L)`;
-        }
-        
-        // Avviso di sicurezza
-        if (mlTotali > 1000) {
-          result += `\n\n⚠️ Importante: Assicurarsi che l'area sia adeguatamente ventilata e utilizzare dispositivi di protezione individuale.`;
-          output.classList.add('warning');
-        } else {
-          output.classList.add('success');
-        }
-        
-        output.textContent = result;
-        
-        // Salva input
-        salvaInput('mc', mc);
-        salvaInput('dose-fumo', doseFumo);
-        
-      } catch (error) {
-        output.textContent = `❌ Errore: ${error.message}`;
-        output.classList.add('error');
-      }
-    }
-
-    function calcolaCosti() {
-      const output = document.getElementById('output-costi');
-      output.className = 'output';
-      
-      try {
-        const prezzo = parseFloat(document.getElementById('prezzo').value);
-        const mlusati = parseFloat(document.getElementById('mlusati').value);
-        const manodopera = parseFloat(document.getElementById('manodopera').value) || 0;
-        const tempo = parseFloat(document.getElementById('tempo').value) || 0;
-        
-        // Validazione
-        if (isNaN(prezzo)) throw new Error('Inserire un prezzo valido');
-        if (isNaN(mlusati)) throw new Error('Inserire ml usati validi');
-        if (prezzo <= 0) throw new Error('Prezzo deve essere maggiore di 0');
-        if (mlusati <= 0) throw new Error('ml usati devono essere maggiori di 0');
-        
-        // Calcoli
-        const costoProdotto = (prezzo / 1000) * mlusati;
-        const costoManodopera = manodopera * tempo;
-        const costoTotale = costoProdotto + costoManodopera;
-        
-        // Risultato formattato
-        let result = `🔹 Costo prodotto: €${costoProdotto.toFixed(2)}\n`;
-        
-        if (manodopera > 0 && tempo > 0) {
-          result += `🔹 Manodopera (${tempo}h × €${manodopera}/h): €${costoManodopera.toFixed(2)}\n`;
-          result += `🔹 Costo totale: €${costoTotale.toFixed(2)}`;
-        } else {
-          result += `🔹 (Costo manodopera non incluso)`;
-        }
-        
-        output.textContent = result;
-        output.classList.add('success');
-        
-        // Salva input
-        salvaInput('prezzo', prezzo);
-        salvaInput('mlusati', mlusati);
-        salvaInput('manodopera', manodopera);
-        salvaInput('tempo', tempo);
-        
-      } catch (error) {
-        output.textContent = `❌ Errore: ${error.message}`;
-        output.classList.add('error');
-      }
-    }
-
-    // ========== UTILITIES ========== //
-    function salvaInput(id, valore) {
-      localStorage.setItem(`pestcalc_${id}`, valore);
-    }
-    
-    function caricaValoriSalvati() {
-      document.querySelectorAll('input').forEach(input => {
-        const savedValue = localStorage.getItem(`pestcalc_${input.id}`);
-        if (savedValue !== null) {
-          input.value = savedValue;
-        }
-      });
-    }
-    
-    function impostaValoriDemo() {
-      // Imposta valori di esempio solo se non sono già presenti
-      if (!localStorage.getItem('pestcalc_demo_set')) {
-        document.getElementById('concentrazione').value = '5.5';
-        document.getElementById('volume').value = '1000';
-        document.getElementById('mq').value = '50';
-        document.getElementById('dose').value = '20';
-        document.getElementById('mc').value = '100';
-        document.getElementById('dose-fumo').value = '10';
-        document.getElementById('prezzo').value = '25.99';
-        document.getElementById('mlusati').value = '500';
-        document.getElementById('manodopera').value = '30';
-        document.getElementById('tempo').value = '1.5';
-        localStorage.setItem('pestcalc_demo_set', 'true');
-      }
-    }
-
-    // ========== INIZIALIZZAZIONE ========== //
-    document.addEventListener('DOMContentLoaded', () => {
-      caricaValoriSalvati();
-      impostaValoriDemo();
-      
-      // Salvataggio automatico
-      document.querySelectorAll('input').forEach(input => {
-        input.addEventListener('change', function() {
-          localStorage.setItem(`pestcalc_${this.id}`, this.value);
-        });
-      });
-      
-      // Verifica dominio
-      if (window.location.hostname !== 'baida98.github.io' && 
-          window.location.hostname !== 'localhost') {
-        document.body.innerHTML = `
-          <div style="text-align:center; padding:50px 20px; font-family:sans-serif;">
-            <h1 style="color:#e74c3c; margin-bottom:20px;">Accesso non autorizzato</h1>
-            <p>Questa applicazione è accessibile solo dal dominio: <strong>baida98.github.io</strong></p>
-          </div>
-        `;
-      }
-    });
-  </script>
+  <script src="main.js"></script>
 </body>
 </html>
