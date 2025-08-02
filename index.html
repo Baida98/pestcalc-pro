@@ -1,62 +1,12 @@
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#667eea" />
   <title>PestCalc Pro</title>
-  <style>
-    /* Stile originale preservato */
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      background: #f9f9f9;
-      color: #333;
-    }
-    .app-container {
-      padding: 20px;
-      max-width: 600px;
-      margin: auto;
-    }
-    header, section {
-      margin-bottom: 30px;
-    }
-    h1, h2 {
-      color: #4a63e7;
-    }
-    input {
-      display: block;
-      margin: 10px 0;
-      padding: 10px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #4a63e7;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #3547c1;
-    }
-    .output {
-      margin-top: 10px;
-      font-weight: bold;
-      min-height: 20px;
-    }
-    .error {
-      color: #e74c3c;
-    }
-    .success {
-      color: #27ae60;
-    }
-    footer {
-      text-align: center;
-      font-size: 0.9em;
-      color: #888;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app-container">
@@ -67,34 +17,32 @@
 
     <section id="diluizione">
       <h2>💧 Calcolo Diluizione</h2>
-      <input type="number" id="concentrazione" placeholder="% principio attivo" min="0.1" max="100" step="0.1">
-      <input type="number" id="volume" placeholder="Volume soluzione finale (ml)" min="10" step="1">
+      <input type="number" id="concentrazione" placeholder="% principio attivo" />
+      <input type="number" id="volume" placeholder="Volume soluzione finale (ml)" />
       <button onclick="calcolaDiluizione()">Calcola</button>
       <div id="output-diluizione" class="output"></div>
     </section>
 
     <section id="saturazione">
       <h2>🏠 Saturazione Ambientale</h2>
-      <input type="number" id="mq" placeholder="Metri quadri" min="1" step="0.1">
-      <input type="number" id="dose" placeholder="ml/mq" min="1" step="1">
+      <input type="number" id="mq" placeholder="Metri quadri" />
+      <input type="number" id="dose" placeholder="ml/mq" />
       <button onclick="calcolaSaturazione()">Calcola</button>
       <div id="output-saturazione" class="output"></div>
     </section>
 
     <section id="fumigazione">
       <h2>☁️ Fumigazione</h2>
-      <input type="number" id="mc" placeholder="Metri cubi" min="1" step="1">
-      <input type="number" id="dose-fumo" placeholder="ml/mc" min="1" step="1">
+      <input type="number" id="mc" placeholder="Metri cubi" />
+      <input type="number" id="dose-fumo" placeholder="ml/mc" />
       <button onclick="calcolaFumigazione()">Calcola</button>
       <div id="output-fumigazione" class="output"></div>
     </section>
 
     <section id="costi">
       <h2>💰 Calcolo Costi</h2>
-      <input type="number" id="prezzo" placeholder="Prezzo per litro (€)" min="0" step="0.01">
-      <input type="number" id="mlusati" placeholder="ml usati" min="1" step="1">
-      <input type="number" id="manodopera" placeholder="Costo manodopera (€/ora)" min="0" step="1">
-      <input type="number" id="tempo" placeholder="Tempo stimato (ore)" min="0.1" step="0.1">
+      <input type="number" id="prezzo" placeholder="Prezzo per litro (€)" />
+      <input type="number" id="mlusati" placeholder="ml usati" />
       <button onclick="calcolaCosti()">Calcola</button>
       <div id="output-costi" class="output"></div>
     </section>
@@ -103,204 +51,6 @@
       <p>© 2025 PestCalc Pro. Tutti i diritti riservati.</p>
     </footer>
   </div>
-
-  <script>
-    // ========== SISTEMA DI VALIDAZIONE ========== //
-    function validaInput(id, min, max) {
-      const input = document.getElementById(id);
-      const value = parseFloat(input.value);
-      
-      if (isNaN(value)) {
-        return { valido: false, messaggio: `Inserire un valore numerico valido` };
-      }
-      
-      if (value < min) {
-        return { valido: false, messaggio: `Il valore non può essere inferiore a ${min}` };
-      }
-      
-      if (value > max) {
-        return { valido: false, messaggio: `Il valore non può superare ${max}` };
-      }
-      
-      return { valido: true, valore: value };
-    }
-    
-    // ========== GESTIONE ERRORI ========== //
-    function mostraErrore(elementId, messaggio) {
-      const output = document.getElementById(elementId);
-      output.textContent = `❌ ${messaggio}`;
-      output.className = 'output error';
-    }
-    
-    function mostraSuccesso(elementId, messaggio) {
-      const output = document.getElementById(elementId);
-      output.textContent = messaggio;
-      output.className = 'output success';
-    }
-    
-    // ========== FUNZIONI DI CALCOLO MIGLIORATE ========== //
-    function calcolaDiluizione() {
-      // Validazione input
-      const validConc = validaInput('concentrazione', 0.1, 100);
-      const validVol = validaInput('volume', 10, 10000);
-      
-      if (!validConc.valido) {
-        mostraErrore('output-diluizione', validConc.messaggio);
-        return;
-      }
-      
-      if (!validVol.valido) {
-        mostraErrore('output-diluizione', validVol.messaggio);
-        return;
-      }
-      
-      // Calcolo
-      const mlPrincipioAttivo = (validConc.valore / 100) * validVol.valore;
-      const mlSolvente = validVol.valore - mlPrincipioAttivo;
-      
-      // Risultato
-      const risultato = `Usa ${mlPrincipioAttivo.toFixed(2)} ml di principio attivo e ${mlSolvente.toFixed(2)} ml di solvente`;
-      mostraSuccesso('output-diluizione', risultato);
-      
-      // Salvataggio dati
-      salvaDati();
-    }
-
-    function calcolaSaturazione() {
-      // Validazione input
-      const validMq = validaInput('mq', 1, 10000);
-      const validDose = validaInput('dose', 1, 1000);
-      
-      if (!validMq.valido) {
-        mostraErrore('output-saturazione', validMq.messaggio);
-        return;
-      }
-      
-      if (!validDose.valido) {
-        mostraErrore('output-saturazione', validDose.messaggio);
-        return;
-      }
-      
-      // Calcolo
-      const mlTotali = validMq.valore * validDose.valore;
-      
-      // Risultato
-      const risultato = `Usa ${mlTotali.toFixed(2)} ml totali (${validDose.valore} ml/m² × ${validMq.valore} m²)`;
-      mostraSuccesso('output-saturazione', risultato);
-      
-      // Salvataggio dati
-      salvaDati();
-    }
-
-    function calcolaFumigazione() {
-      // Validazione input
-      const validMc = validaInput('mc', 1, 100000);
-      const validDose = validaInput('dose-fumo', 1, 500);
-      
-      if (!validMc.valido) {
-        mostraErrore('output-fumigazione', validMc.messaggio);
-        return;
-      }
-      
-      if (!validDose.valido) {
-        mostraErrore('output-fumigazione', validDose.messaggio);
-        return;
-      }
-      
-      // Calcolo
-      const mlTotali = validMc.valore * validDose.valore;
-      
-      // Risultato
-      const risultato = `Usa ${mlTotali.toFixed(2)} ml per fumigazione (${validDose.valore} ml/m³ × ${validMc.valore} m³)`;
-      mostraSuccesso('output-fumigazione', risultato);
-      
-      // Salvataggio dati
-      salvaDati();
-    }
-
-    function calcolaCosti() {
-      // Validazione input
-      const validPrezzo = validaInput('prezzo', 0.01, 10000);
-      const validMl = validaInput('mlusati', 1, 100000);
-      const validManodopera = validaInput('manodopera', 0, 1000);
-      const validTempo = validaInput('tempo', 0.1, 100);
-      
-      if (!validPrezzo.valido) {
-        mostraErrore('output-costi', validPrezzo.messaggio);
-        return;
-      }
-      
-      if (!validMl.valido) {
-        mostraErrore('output-costi', validMl.messaggio);
-        return;
-      }
-      
-      // Calcolo
-      const costoProdotto = (validPrezzo.valore / 1000) * validMl.valore;
-      const costoManodopera = validManodopera.valore * validTempo.valore;
-      const costoTotale = costoProdotto + costoManodopera;
-      
-      // Risultato
-      let risultato = `Costo prodotto: €${costoProdotto.toFixed(2)}\n`;
-      
-      if (costoManodopera > 0) {
-        risultato += `Costo manodopera: €${costoManodopera.toFixed(2)}\n`;
-        risultato += `Costo totale: €${costoTotale.toFixed(2)}`;
-      }
-      
-      mostraSuccesso('output-costi', risultato);
-      
-      // Salvataggio dati
-      salvaDati();
-    }
-    
-    // ========== PERSISTENZA DATI ========== //
-    function salvaDati() {
-      // Salva tutti i valori degli input
-      document.querySelectorAll('input').forEach(input => {
-        if (input.value) {
-          localStorage.setItem(`pestcalc_${input.id}`, input.value);
-        }
-      });
-    }
-    
-    function caricaDati() {
-      // Carica tutti i valori salvati
-      document.querySelectorAll('input').forEach(input => {
-        const savedValue = localStorage.getItem(`pestcalc_${input.id}`);
-        if (savedValue) {
-          input.value = savedValue;
-        }
-      });
-    }
-    
-    // ========== PROTEZIONE CODICE ========== //
-    function proteggiCodice() {
-      const dominioConsentito = 'baida98.github.io';
-      if (window.location.hostname !== dominioConsentito && 
-          window.location.hostname !== 'localhost') {
-        document.body.innerHTML = `
-          <div style="text-align:center; padding:50px 20px; font-family:sans-serif;">
-            <h1 style="color:#e74c3c; margin-bottom:20px;">Accesso non autorizzato</h1>
-            <p>Questa applicazione è accessibile solo dal dominio: ${dominioConsentito}</p>
-          </div>
-        `;
-      }
-    }
-    
-    // ========== INIZIALIZZAZIONE ========== //
-    document.addEventListener('DOMContentLoaded', () => {
-      // Proteggi il codice
-      proteggiCodice();
-      
-      // Carica i dati salvati
-      caricaDati();
-      
-      // Imposta il salvataggio automatico
-      document.querySelectorAll('input').forEach(input => {
-        input.addEventListener('change', salvaDati);
-      });
-    });
-  </script>
+  <script src="main.js"></script>
 </body>
 </html>
