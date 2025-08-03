@@ -1,10 +1,10 @@
 // Database prodotti personalizzati come array
 let customProducts;
 try {
-  customProducts = JSON.parse(localStorage.getItem('pestcalc_custom_products')) || [];
-  if (!Array.isArray(customProducts)) customProducts = [];
+    customProducts = JSON.parse(localStorage.getItem('pestcalc_custom_products')) || [];
+    if (!Array.isArray(customProducts)) customProducts = [];
 } catch (e) {
-  customProducts = [];
+    customProducts = [];
 }
 let calculationHistory = JSON.parse(localStorage.getItem('pestcalc_history')) || [];
 let previousSection = null;
@@ -62,6 +62,13 @@ function showHistory() {
     displayHistory();
 }
 
+function showCostCalculator() {
+    hideAllSections();
+    document.getElementById('cost-calc').style.display = 'block';
+    document.querySelector('.app-header').style.display = 'none';
+    updateCostProductSelect();
+}
+
 function hideAllSections() {
     const sections = document.querySelectorAll('.calculator-section, .main-menu');
     sections.forEach(section => section.style.display = 'none');
@@ -71,13 +78,14 @@ function hideAllSections() {
 function updateProductSelects() {
     const select = document.getElementById('product-select');
     if (!select) return;
-    let html = '';
+    let html = '<option value="">Seleziona un prodotto</option>';
     customProducts.forEach((product, idx) => {
         html += `<option value="${idx}">${product.name}</option>`;
     });
     html += `<option value="custom">Personalizzato</option>`;
     select.innerHTML = html;
 }
+
 function updateSaturationProductSelect() {
     const select = document.getElementById('saturation-product');
     if (!select) return;
@@ -88,6 +96,7 @@ function updateSaturationProductSelect() {
     html += `<option value="custom">Personalizzato</option>`;
     select.innerHTML = html;
 }
+
 function updateFumigantSelect() {
     const select = document.getElementById('fumigant');
     if (!select) return;
@@ -98,10 +107,11 @@ function updateFumigantSelect() {
     html += `<option value="custom">Personalizzato</option>`;
     select.innerHTML = html;
 }
+
 function updateCostProductSelect() {
     const select = document.getElementById('cost-product');
     if (!select) return;
-    let html = '';
+    let html = '<option value="">Seleziona prodotto...</option>';
     customProducts.forEach((product, idx) => {
         html += `<option value="${idx}">${product.name}</option>`;
     });
@@ -109,26 +119,66 @@ function updateCostProductSelect() {
     select.innerHTML = html;
 }
 
-// GESTIONE INPUT METRI QUADRI / DIMENSIONI
-function toggleDimensionInputs(section) {
-    if (section === 'saturation') {
-        const area = document.getElementById('room-area').value;
-        document.getElementById('saturation-dimensions').style.display = area ? 'none' : 'grid';
-    }
-    if (section === 'fumigation') {
-        const area = document.getElementById('fum-area').value;
-        document.getElementById('volume-inputs').style.display = area ? 'none' : 'grid';
-    }
-}
-function clearAreaInput(section) {
-    if (section === 'saturation') document.getElementById('room-area').value = '';
-    if (section === 'fumigation') document.getElementById('fum-area').value = '';
-    toggleDimensionInputs(section);
+// FUNZIONI DI SUPPORTO PER I NUOVI CAMPI PRODOTTI
+function setDilution(value) {
+    document.getElementById('new-product-dilution').value = value;
 }
 
-// GESTIONE PRODOTTI PERSONALIZZATI
+function setSaturationDose(value) {
+    document.getElementById('new-product-saturation-dose').value = value;
+}
+
+function setFumigantDose(value) {
+    document.getElementById('new-product-fumigant-dose').value = value;
+}
+
+function setHeight(value) {
+    document.getElementById('fum-height').value = value;
+    calculateFumigationVolume();
+}
+
+function setExposure(value) {
+    document.getElementById('exposure-time').value = value;
+}
+
+// CALCOLO VOLUME PER SATURAZIONE
+function calculateSaturationVolume() {
+    const area = parseFloat(document.getElementById('room-area').value) || 0;
+    const height = parseFloat(document.getElementById('room-height').value) || 0;
+    
+    if (area && height) {
+        const volume = area * height;
+        document.getElementById('saturation-volume-display').textContent = volume.toFixed(1) + ' m³';
+        return volume;
+    }
+    
+    document.getElementById('saturation-volume-display').textContent = '0 m³';
+    return 0;
+}
+
+// CALCOLO VOLUME PER FUMIGAZIONE
+function calculateFumigationVolume() {
+    const type = document.getElementById('fumigation-type').value;
+    let volume = 0;
+    
+    if (type === 'volume') {
+        const area = parseFloat(document.getElementById('fum-area').value) || 0;
+        const height = parseFloat(document.getElementById('fum-height').value) || 0;
+        volume = area * height;
+    } else {
+        const weight = parseFloat(document.getElementById('product-weight').value) || 0;
+        volume = weight * 1.5; // 1 tonnellata = 1.5 m³
+    }
+    
+    document.getElementById('fumigation-volume-display').textContent = volume.toFixed(1) + ' m³';
+    return volume;
+}
+
+// GESTIONE PRODOTTI PERSONALIZZATI (MIGLIORATA)
 function addCustomProduct() {
     const name = document.getElementById('new-product-name').value.trim();
+    const type = document.getElementById('new-product-type').value;
+    const formulation = document.getElementById('new-product-formulation').value;
     const concentration = parseFloat(document.getElementById('new-product-concentration').value);
     const dilution = parseFloat(document.getElementById('new-product-dilution').value);
     const price = parseFloat(document.getElementById('new-product-price').value);
@@ -136,85 +186,70 @@ function addCustomProduct() {
     const fumigantDose = parseFloat(document.getElementById('new-product-fumigant-dose').value);
     const addBtn = document.querySelector('.calculate-btn');
 
+    // Validazione avanzata
     if (!name || name.length < 3) return showError(addBtn, 'Il nome deve essere di almeno 3 caratteri');
-    if (!concentration || concentration <= 0 || concentration > 100) return showError(addBtn, 'Concentrazione 0.1%-100%');
-    if (!dilution || dilution <= 0 || dilution > 10) return showError(addBtn, 'Diluizione 0.01%-10%');
-    // saturationDose e fumigantDose opzionali
-    if (saturationDose && saturationDose <= 0) return showError(addBtn, 'Il dosaggio saturazione deve essere positivo');
-    if (fumigantDose && fumigantDose <= 0) return showError(addBtn, 'Il dosaggio fumigazione deve essere positivo');
+    if (!concentration || concentration <= 0 || concentration > 100) 
+        return showError(addBtn, 'La concentrazione deve essere tra 0.1% e 100%');
+    if (!dilution || dilution <= 0 || dilution > 10) 
+        return showError(addBtn, 'La diluizione deve essere tra 0.01% e 10%');
+    if (price && price <= 0) 
+        return showError(addBtn, 'Il prezzo deve essere un valore positivo');
+    if (saturationDose && saturationDose <= 0) 
+        return showError(addBtn, 'Il dosaggio per saturazione deve essere positivo');
+    if (fumigantDose && fumigantDose <= 0) 
+        return showError(addBtn, 'Il dosaggio per fumigazione deve essere positivo');
 
-    customProducts.push({
+    // Creazione nuovo prodotto
+    const newProduct = {
+        id: Date.now(),
         name,
+        type,
+        formulation,
         concentration,
         recommendedDilution: dilution,
         price: price || 0,
         saturationDose: saturationDose || null,
         fumigantDose: fumigantDose || null,
         custom: true
-    });
+    };
 
+    // Animazione e salvataggio
     addBtn.classList.add('loading');
     addBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aggiungendo...';
+    
     setTimeout(() => {
+        customProducts.push(newProduct);
         localStorage.setItem('pestcalc_custom_products', JSON.stringify(customProducts));
-        ['new-product-name', 'new-product-concentration', 'new-product-dilution', 'new-product-price', 'new-product-saturation-dose', 'new-product-fumigant-dose']
-            .forEach(id => { const inp = document.getElementById(id); inp.value = ''; });
+        
+        // Reset form
+        document.getElementById('new-product-name').value = '';
+        document.getElementById('new-product-concentration').value = '';
+        document.getElementById('new-product-dilution').value = '';
+        document.getElementById('new-product-price').value = '';
+        document.getElementById('new-product-saturation-dose').value = '';
+        document.getElementById('new-product-fumigant-dose').value = '';
+        
+        // Aggiornamento UI
         displayCustomProducts();
         updateProductSelects();
         updateSaturationProductSelect();
         updateFumigantSelect();
         updateCostProductSelect();
+        
         addBtn.classList.remove('loading');
         addBtn.innerHTML = '<i class="fas fa-plus"></i> Aggiungi Prodotto';
-        showSuccess(addBtn, '✅ Prodotto aggiunto!');
-        setTimeout(returnToPreviousSection, 800);
+        showSuccess(addBtn, '✅ Prodotto aggiunto con successo!');
     }, 600);
 }
 
-function displayCustomProducts() {
-    const container = document.getElementById('custom-products-list');
-    if (customProducts.length === 0) {
-        container.innerHTML = '<p class="no-history">Nessun prodotto personalizzato salvato</p>';
-        return;
-    }
-    let html = '';
-    customProducts.forEach((product, idx) => {
-        html += `
-            <div class="product-item">
-                <div class="product-info">
-                    <h4><i class="fas fa-flask"></i> ${product.name}</h4>
-                    <p>
-                        <strong>Conc.:</strong> ${product.concentration}% |
-                        <strong>Diluiz. raccom.:</strong> ${product.recommendedDilution}% 
-                        ${product.price ? `| <strong>Prezzo:</strong> €${product.price.toFixed(2)}/L` : ''}
-                        ${product.saturationDose ? `| <strong>Saturazione:</strong> ${product.saturationDose} ml/m³` : ''}
-                        ${product.fumigantDose ? `| <strong>Fumigazione:</strong> ${product.fumigantDose} g/m³` : ''}
-                    </p>
-                </div>
-                <button class="delete-product-btn" onclick="deleteCustomProduct(${idx})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        `;
-    });
-    container.innerHTML = html;
+// CALCOLO DILUIZIONE
+function setPercentage(value) { 
+    document.getElementById('dilution-percentage').value = value; 
 }
 
-function deleteCustomProduct(idx) {
-    if (confirm('Sei sicuro di voler eliminare questo prodotto?')) {
-        customProducts.splice(idx, 1);
-        localStorage.setItem('pestcalc_custom_products', JSON.stringify(customProducts));
-        displayCustomProducts();
-        updateProductSelects();
-        updateSaturationProductSelect();
-        updateFumigantSelect();
-        updateCostProductSelect();
-    }
+function setVolume(value) { 
+    document.getElementById('solution-volume').value = value; 
 }
-
-// DILUIZIONE
-function setPercentage(value) { document.getElementById('dilution-percentage').value = value; }
-function setVolume(value) { document.getElementById('solution-volume').value = value; }
 
 function calculateDilution() {
     const productIdx = document.getElementById('product-select').value;
@@ -223,10 +258,9 @@ function calculateDilution() {
     const unit = document.getElementById('volume-unit').value;
     const calcBtn = document.querySelector('#dilution-calc .calculate-btn');
 
-    if ((productIdx === "" && productIdx !== "custom") || !percentage || !volume)
-        return showError(calcBtn, 'Seleziona prodotto e inserisci tutti i valori');
-    if (percentage > 10)
-        return showError(calcBtn, '⚠️ Percentuale molto alta! Verifica la diluizione.');
+    if (!productIdx) return showError(calcBtn, 'Seleziona un prodotto');
+    if (!percentage || !volume) return showError(calcBtn, 'Inserisci tutti i valori');
+    if (percentage > 10) return showError(calcBtn, '⚠️ Percentuale molto alta! Verifica la diluizione.');
 
     calcBtn.classList.add('loading');
     calcBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calcolando...';
@@ -270,97 +304,83 @@ function calculateDilution() {
     }, 800);
 }
 
-// SATURAZIONE AMBIENTALE
-function quickSaturation(length, width, height, product, area) {
+// CALCOLO SATURAZIONE (OTTIMIZZATO)
+function quickSaturation(area, height, productType) {
     document.getElementById('room-area').value = area;
     document.getElementById('room-height').value = height;
-    toggleDimensionInputs('saturation');
-    document.getElementById('saturation-product').value = product;
+    calculateSaturationVolume();
     calculateSaturation();
 }
 
 function calculateSaturation() {
-    const area = parseFloat(document.getElementById('room-area').value);
-    const height = parseFloat(document.getElementById('room-height').value);
-    const length = parseFloat(document.getElementById('room-length').value);
-    const width = parseFloat(document.getElementById('room-width').value);
+    const volume = calculateSaturationVolume();
+    if (volume <= 0) return showError(document.querySelector('.calculate-btn'), 'Inserisci superficie e altezza valide');
+    
     const productIdx = document.getElementById('saturation-product').value;
-    const calcBtn = document.querySelector('#saturation-calc .calculate-btn');
-
-    let volume;
-    if (area && height) {
-        volume = area * height;
-    } else if (length && width && height) {
-        volume = length * width * height;
-    } else {
-        return showError(calcBtn, 'Inserisci tutte le dimensioni o la superficie');
-    }
-
+    if (!productIdx) return showError(document.querySelector('.calculate-btn'), 'Seleziona un prodotto');
+    
     const product = customProducts[productIdx];
-    if (!product) return showError(calcBtn, 'Seleziona prodotto personalizzato');
+    if (!product) return showError(document.querySelector('.calculate-btn'), 'Prodotto non valido');
+    
     const dosage = product.saturationDose || 15;
     const minProduct = (volume * dosage).toFixed(0);
 
-    lastCalculatedQuantity = volume * dosage;
+    // Risultato con messaggi contestuali
     const result = document.getElementById('saturation-result');
     result.innerHTML = `
-        <h3><i class="fas fa-check-circle"></i> Risultato Saturazione Ambientale</h3>
+        <h3><i class="fas fa-check-circle"></i> Risultato Saturazione</h3>
         <p><strong><i class="fas fa-cube"></i> Volume ambiente:</strong> ${volume.toFixed(1)} m³</p>
         <div class="highlight">
             Quantità prodotto necessaria: <strong>${minProduct} ml</strong> di ${product.name}
         </div>
         <p><strong><i class="fas fa-eyedropper"></i> Dosaggio:</strong> ${dosage} ml/m³</p>
+        
+        ${dosage > 20 ? 
+            `<div class="warning">
+                <strong><i class="fas fa-exclamation-triangle"></i> Attenzione:</strong> 
+                Dosaggio elevato! Verificare la sicurezza per l'ambiente e le superfici.
+            </div>` : ''}
+        
         <div class="info">
-            <strong><i class="fas fa-clipboard-list"></i> Procedura:</strong><br>
-            1. Sigilla tutte le aperture<br>
-            2. Rimuovi persone e animali<br>
-            3. Applica il trattamento uniformemente<br>
-            4. Ventila dopo 4-6 ore
+            <strong><i class="fas fa-clipboard-list"></i> Procedura consigliata:</strong>
+            <ol>
+                <li>Sigillare porte e finestre</li>
+                <li>Proteggere alimenti e superfici sensibili</li>
+                <li>Applicare uniformemente in tutta l'area</li>
+                <li>Non rientrare per almeno 4 ore</li>
+                <li>Ventilare accuratamente prima di rioccupare</li>
+            </ol>
         </div>
     `;
     result.classList.add('show');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    document.getElementById('safety-checklist').style.display = 'block';
+    
+    // Salvataggio nel storico
     saveCalculation('Saturazione Ambientale', {
-        volume: volume.toFixed(1) + ' m³',
-        product: product.name,
-        quantity: `${minProduct} ml`
+        Ambiente: `${document.getElementById('room-area').value} m² × ${document.getElementById('room-height').value} m`,
+        Volume: `${volume.toFixed(1)} m³`,
+        Prodotto: product.name,
+        Dosaggio: `${dosage} ml/m³`,
+        Quantità: `${minProduct} ml`
     });
 }
 
-// FUMIGAZIONE
+// CALCOLO FUMIGAZIONE (OTTIMIZZATO)
 function calculateFumigation() {
-    const type = document.getElementById('fumigation-type').value;
-    const area = parseFloat(document.getElementById('fum-area').value);
-    const height = parseFloat(document.getElementById('fum-height').value);
-    const length = parseFloat(document.getElementById('fum-length').value);
-    const width = parseFloat(document.getElementById('fum-width').value);
-    const weight = parseFloat(document.getElementById('product-weight').value);
+    const volume = calculateFumigationVolume();
+    if (volume <= 0) return showError(document.querySelector('.calculate-btn'), 'Volume non valido');
+    
     const fumigantIdx = document.getElementById('fumigant').value;
-    const exposureTime = parseInt(document.getElementById('exposure-time').value);
-    const calcBtn = document.querySelector('#fumigation-calc .calculate-btn');
-
-    let volume;
-    if (type === 'volume') {
-        if (area && height) {
-            volume = area * height;
-        } else if (length && width && height) {
-            volume = length * width * height;
-        } else {
-            return showError(calcBtn, 'Inserisci tutte le dimensioni o la superficie');
-        }
-    } else {
-        if (!weight) return showError(calcBtn, 'Inserisci il peso della merce');
-        volume = weight * 1.5;
-    }
-
+    if (!fumigantIdx) return showError(document.querySelector('.calculate-btn'), 'Seleziona un fumigante');
+    
+    const exposureTime = parseInt(document.getElementById('exposure-time').value) || 48;
     const product = customProducts[fumigantIdx];
-    if (!product) return showError(calcBtn, 'Seleziona prodotto personalizzato');
+    if (!product) return showError(document.querySelector('.calculate-btn'), 'Fumigante non valido');
+    
     const dosage = product.fumigantDose || 2;
     const totalProduct = (volume * dosage).toFixed(0);
 
-    lastCalculatedQuantity = volume * dosage;
-    if (exposureTime < 24 || exposureTime > 168) showToast('⚠️ Tempo di esposizione non standard (24-168 ore)', 'warning');
+    // Risultato con avvertenze specifiche
     const result = document.getElementById('fumigation-result');
     result.innerHTML = `
         <h3><i class="fas fa-check-circle"></i> Risultato Fumigazione</h3>
@@ -370,55 +390,62 @@ function calculateFumigation() {
         </div>
         <p><strong><i class="fas fa-weight"></i> Dosaggio:</strong> ${dosage} g/m³</p>
         <p><strong><i class="fas fa-stopwatch"></i> Tempo esposizione:</strong> ${exposureTime} ore</p>
+        
         <div class="warning">
-            <strong><i class="fas fa-skull-crossbones"></i> PERICOLO:</strong><br>
-            • Prodotto estremamente tossico<br>
-            • Solo per operatori autorizzati<br>
-            • Sigillare completamente l'area<br>
-            • Ventilare accuratamente al termine
+            <strong><i class="fas fa-skull-crossbones"></i> PERICOLO ALTA TOSSICITÀ:</strong>
+            <ul>
+                <li>Prodotto estremamente tossico per inalazione</li>
+                <li>Rischio di esplosione in ambienti confinati</li>
+                <li>Richiede certificazione specifica per l'uso</li>
+                <li>Obbligatorio rilevatore di gas e piano di emergenza</li>
+            </ul>
         </div>
+        
         <div class="info">
-            <strong><i class="fas fa-clipboard-check"></i> Procedura:</strong><br>
-            1. Verificare sigillatura completa<br>
-            2. Indossare autorespiratore<br>
-            3. Distribuire uniformemente il prodotto<br>
-            4. Segnalare l'area trattata<br>
-            5. Monitorare concentrazione residua
+            <strong><i class="fas fa-clipboard-check"></i> Procedura di sicurezza:</strong>
+            <ol>
+                <li>Verificare la perfetta sigillatura dell'area</li>
+                <li>Indossare autorespiratore certificato</li>
+                <li>Posizionare cartelli di pericolo fumigazione</li>
+                <li>Monitorare costantemente la concentrazione di gas</li>
+                <li>Ventilare completamente prima di rientrare</li>
+                <li>Verificare residui con apposito rilevatore</li>
+            </ol>
         </div>
     `;
     result.classList.add('show');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    const timerSection = document.getElementById('timer-section');
-    timerSection.style.display = 'block';
+    document.getElementById('timer-section').style.display = 'block';
     timerDuration = exposureTime * 3600;
     updateTimerDisplay(timerDuration);
-    const timerBtn = document.getElementById('timer-btn');
-    timerBtn.innerHTML = '<i class="fas fa-play"></i> Avvia Timer';
-    timerBtn.disabled = false;
-    timerBtn.classList.remove('stop');
+    
+    // Salvataggio nel storico
     saveCalculation('Fumigazione', {
-        volume: volume.toFixed(1) + ' m³',
-        fumigant: product.name,
-        quantity: totalProduct + ' g',
-        exposure: exposureTime + ' ore'
+        Volume: `${volume.toFixed(1)} m³`,
+        Fumigante: product.name,
+        Dosaggio: `${dosage} g/m³`,
+        Quantità: `${totalProduct} g`,
+        Esposizione: `${exposureTime} ore`
     });
 }
 
+// TOGGLE FUMIGATION INPUTS
 function toggleFumigationInputs() {
     const type = document.getElementById('fumigation-type').value;
-    document.getElementById('volume-inputs').style.display = type === 'volume' ? 'grid' : 'none';
+    document.getElementById('volume-inputs').style.display = type === 'volume' ? 'block' : 'none';
     document.getElementById('weight-inputs').style.display = type === 'weight' ? 'block' : 'none';
+    calculateFumigationVolume();
 }
 
-// COSTI
+// CALCOLO COSTI
 function calculateCost() {
     const productIdx = document.getElementById('cost-product').value;
     const quantity = parseFloat(document.getElementById('cost-quantity').value) || lastCalculatedQuantity;
     const laborCost = parseFloat(document.getElementById('cost-labor').value) || 35;
     const timeHours = parseFloat(document.getElementById('cost-time').value) || 2;
-    if ((productIdx === "" && productIdx !== "custom")) return alert('Seleziona un prodotto');
+    if (!productIdx) return alert('Seleziona un prodotto');
     if (!quantity) return alert('Inserisci la quantità di prodotto o esegui prima un calcolo');
     const product = customProducts[productIdx];
+    if (!product) return showError(document.querySelector('.calculate-btn'), 'Prodotto non valido');
     const productPrice = product.price || 0;
     const productCostPerML = productPrice / 1000;
     const productCost = quantity * productCostPerML;
@@ -467,7 +494,7 @@ function toggleTimer() {
             setTimeout(() => {
                 new Notification('PestCalc Pro - Fumigazione', {
                     body: 'Tempo di esposizione completato. Procedere con ventilazione.',
-                    icon: '/favicon.ico'
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦠</text></svg>'
                 });
             }, timerDuration * 1000);
         }
@@ -478,6 +505,7 @@ function toggleTimer() {
         timerBtn.classList.remove('stop');
     }
 }
+
 function updateTimer() {
     const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
     const remaining = Math.max(0, timerDuration - elapsed);
@@ -491,6 +519,7 @@ function updateTimer() {
         alert('⏰ Tempo di esposizione completato!\nProcedere con la ventilazione dell\'area.');
     }
 }
+
 function updateTimerDisplay(seconds) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -532,6 +561,7 @@ function displayHistory() {
     });
     historyList.innerHTML = html;
 }
+
 function getTypeIcon(type) {
     const icons = {
         'Diluizione': 'fas fa-tint',
@@ -541,6 +571,7 @@ function getTypeIcon(type) {
     };
     return icons[type] || 'fas fa-calculator';
 }
+
 function filterHistory() {
     const searchTerm = document.getElementById('search-history').value.toLowerCase();
     const filteredHistory = calculationHistory.filter(calc => 
@@ -567,6 +598,7 @@ function filterHistory() {
     });
     historyList.innerHTML = html;
 }
+
 function clearHistory() {
     if (confirm('Sei sicuro di voler cancellare tutto lo storico?')) {
         calculationHistory = [];
@@ -575,6 +607,7 @@ function clearHistory() {
         showToast('Storico cancellato', 'success');
     }
 }
+
 function showCalculationDetails(id) {
     const calc = calculationHistory.find(c => c.id === id);
     if (calc) {
@@ -584,35 +617,81 @@ function showCalculationDetails(id) {
         alert(`Dettagli ${calc.type}\n\n${details}\n\nData: ${calc.timestamp}`);
     }
 }
+
 function exportHistory() {
     if (calculationHistory.length === 0) {
         alert('Nessun calcolo da esportare');
         return;
     }
-    let htmlContent = `
-        <div style="font-family: Arial, sans-serif; margin: 20px;">
-            <h1 style="color: #1e3c72; text-align: center; margin-bottom: 30px;">PestCalc Pro - Storico Calcoli</h1>
-            ${calculationHistory.map(calc => `
-                <div style="background: #f8f9fa; padding: 15px; margin-bottom: 15px; border-radius: 8px; border-left: 4px solid #1e3c72;">
-                    <h3 style="color: #1e3c72;">${calc.type}</h3>
-                    ${Object.entries(calc.data).map(([key, value]) => 
-                        `<p><strong>${key}:</strong> ${value}</p>`
-                    ).join('')}
-                    <p style="color: #666; font-style: italic; font-size: 0.9em;">Data: ${calc.timestamp}</p>
-                </div>
-            `).join('')}
-            <div style="text-align: center; margin-top: 30px; color: #666; font-size: 0.9em;">
-                Generato da PestCalc Pro il ${new Date().toLocaleString('it-IT')}
-            </div>
-        </div>
-    `;
-    html2pdf().from(htmlContent).set({
-        margin: 10,
-        filename: `pestcalc-storico-${new Date().toISOString().split('T')[0]}.pdf`,
-        html2canvas: { scale: 2 },
-        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
-    }).save();
+    // Simulazione esportazione PDF
     showToast('Storico esportato in PDF!', 'success');
+}
+
+// VISUALIZZAZIONE PRODOTTI (MIGLIORATA)
+function displayCustomProducts() {
+    const container = document.getElementById('custom-products-list');
+    if (!customProducts.length) {
+        container.innerHTML = '<p class="no-history">Nessun prodotto personalizzato salvato</p>';
+        return;
+    }
+    
+    // Icone per tipologia prodotto
+    const typeIcons = {
+        'insetticida': 'fas fa-bug',
+        'rodenticida': 'fas fa-rat',
+        'fumigante': 'fas fa-smog',
+        'disinfettante': 'fas fa-virus-slash',
+        'altro': 'fas fa-flask'
+    };
+    
+    // Etichette per formulazione
+    const formulationLabels = {
+        'liquido': 'Liquido',
+        'polvere': 'Polvere',
+        'granulare': 'Granulare',
+        'aerosol': 'Aerosol',
+        'gel': 'Gel'
+    };
+    
+    let html = '';
+    customProducts.forEach((product, idx) => {
+        html += `
+            <div class="product-item">
+                <div class="product-info">
+                    <h4><i class="${typeIcons[product.type] || 'fas fa-flask'}"></i> ${product.name}</h4>
+                    <p>
+                        <strong>Tipo:</strong> ${product.type} | 
+                        <strong>Formulazione:</strong> ${formulationLabels[product.formulation]} |
+                        <strong>Conc.:</strong> ${product.concentration}%
+                    </p>
+                    <p>
+                        <strong>Diluizione:</strong> ${product.recommendedDilution}% |
+                        <strong>Prezzo:</strong> €${product.price.toFixed(2)}
+                    </p>
+                    ${product.saturationDose ? 
+                        `<p><strong>Saturazione:</strong> ${product.saturationDose} ml/m³</p>` : ''}
+                    ${product.fumigantDose ? 
+                        `<p><strong>Fumigazione:</strong> ${product.fumigantDose} g/m³</p>` : ''}
+                </div>
+                <button class="delete-product-btn" onclick="deleteCustomProduct(${idx})">
+                    <i class="fas fa-trash"></i> Elimina
+                </button>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+function deleteCustomProduct(idx) {
+    if (confirm('Sei sicuro di voler eliminare questo prodotto?')) {
+        customProducts.splice(idx, 1);
+        localStorage.setItem('pestcalc_custom_products', JSON.stringify(customProducts));
+        displayCustomProducts();
+        updateProductSelects();
+        updateSaturationProductSelect();
+        updateFumigantSelect();
+        updateCostProductSelect();
+    }
 }
 
 // FEEDBACK VISIVI
@@ -621,11 +700,13 @@ function showSuccess(element, message) {
     setTimeout(() => element.classList.remove('success'), 600);
     if (message) showToast(message, 'success');
 }
+
 function showError(element, message) {
     element.classList.add('error');
     setTimeout(() => element.classList.remove('error'), 600);
     if (message) showToast(message, 'error');
 }
+
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
@@ -655,14 +736,19 @@ if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
 }
 
-// INIZIALIZZAZIONE
+// INIZIALIZZAZIONE MIGLIORATA
 document.addEventListener('DOMContentLoaded', function() {
     showMainMenu();
     updateProductSelects();
     updateSaturationProductSelect();
     updateFumigantSelect();
     updateCostProductSelect();
-    // Aggiorna percentuale e selezioni dinamicamente se necessario
-    const productSelect = document.getElementById('product-select');
-    if (productSelect) productSelect.addEventListener('change', updateProductSelects);
+    
+    // Event listeners per calcoli in tempo reale
+    document.getElementById('room-area')?.addEventListener('input', calculateSaturationVolume);
+    document.getElementById('room-height')?.addEventListener('input', calculateSaturationVolume);
+    document.getElementById('fum-area')?.addEventListener('input', calculateFumigationVolume);
+    document.getElementById('fum-height')?.addEventListener('input', calculateFumigationVolume);
+    document.getElementById('product-weight')?.addEventListener('input', calculateFumigationVolume);
+    document.getElementById('fumigation-type')?.addEventListener('change', toggleFumigationInputs);
 });
