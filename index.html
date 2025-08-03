@@ -1,32 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#667eea">
-    <meta name="description" content="PestCalc Pro - Calcolatore professionale per disinfestatori. Calcola diluizioni, saturazione ambientale, fumigazione e costi con precisione.">
-    <meta name="keywords" content="disinfestazione, calcolatore, diluizione, fumigazione, pest control">
-    <meta name="author" content="PestCalc Pro">
-    
-    <!-- PWA Meta Tags -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="PestCalc Pro">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PestCalc Pro - Calcolatore Professionale per Disinfestatori</title>
-    
-    <!-- Preload critical resources -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    
-    <link href="style.css" rel="stylesheet" type="text/css" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦠</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦠</text></svg>">
 </head>
 <body>
     <div class="app-container">
@@ -38,7 +18,6 @@
             <p>Calcolatore professionale per disinfestatori</p>
         </header>
 
-        <!-- Menu principale -->
         <div class="main-menu" id="main-menu">
             <button class="menu-btn" onclick="showCalculator('dilution')">
                 <div class="btn-icon">
@@ -105,10 +84,8 @@
                 <h2><i class="fas fa-tint"></i> Calcolo Diluizione</h2>
             </div>
             
-            <!-- Risultato fisso in alto -->
             <div class="result sticky" id="dilution-result"></div>
             
-            <!-- Form compatto -->
             <div class="compact-form">
                 <h4><i class="fas fa-sliders-h"></i> Calcolo Diluizione</h4>
                 <div class="form-row">
@@ -117,10 +94,7 @@
                             <i class="fas fa-flask"></i> Prodotto:
                         </label>
                         <select id="product-select" onchange="updateDilutionPercentage()">
-                            <option value="permetrina-10">Permetrina (conc. 10%)</option>
-                            <option value="deltametrina-5">Deltametrina (conc. 5%)</option>
-                            <option value="cipermetrina-25">Cipermetrina (conc. 25%)</option>
-                            <option value="custom">Personalizzato</option>
+                            <option value="">Seleziona un prodotto</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -163,7 +137,6 @@
                     </div>
                 </div>
                 
-                
                 <button class="calculate-btn" onclick="calculateDilution()">
                     <i class="fas fa-calculator"></i> Calcola Diluizione
                 </button>
@@ -179,67 +152,64 @@
                 <h2><i class="fas fa-home"></i> Saturazione Ambientale</h2>
             </div>
             
-            <!-- Risultato fisso in alto -->
             <div class="result sticky" id="saturation-result"></div>
             
-            <!-- Opzioni rapide per ambienti comuni -->
             <div class="quick-options">
                 <h4><i class="fas fa-bolt"></i> Ambienti Standard</h4>
                 <div class="options-grid">
-                    <button class="option-btn" onclick="quickSaturation(4, 4, 2.7, 'aerosol')">
-                        Stanza<br><small>4×4×2.7m</small>
+                    <button class="option-btn" onclick="quickSaturation(16, 2.7, 'aerosol')">
+                        Stanza<br><small>16 m² (4×4m)</small>
                     </button>
-                    <button class="option-btn" onclick="quickSaturation(6, 4, 2.7, 'aerosol')">
-                        Camera<br><small>6×4×2.7m</small>
+                    <button class="option-btn" onclick="quickSaturation(24, 2.7, 'aerosol')">
+                        Camera<br><small>24 m² (6×4m)</small>
                     </button>
-                    <button class="option-btn" onclick="quickSaturation(5, 3, 2.5, 'nebulizzabile')">
-                        Bagno<br><small>5×3×2.5m</small>
+                    <button class="option-btn" onclick="quickSaturation(15, 2.5, 'nebulizzabile')">
+                        Bagno<br><small>15 m² (5×3m)</small>
                     </button>
-                    <button class="option-btn" onclick="quickSaturation(8, 6, 3, 'aerosol')">
-                        Soggiorno<br><small>8×6×3m</small>
+                    <button class="option-btn" onclick="quickSaturation(48, 3, 'aerosol')">
+                        Soggiorno<br><small>48 m² (8×6m)</small>
                     </button>
-                    <button class="option-btn" onclick="quickSaturation(15, 10, 4, 'nebulizzabile')">
-                        Magazzino<br><small>15×10×4m</small>
+                    <button class="option-btn" onclick="quickSaturation(150, 4, 'nebulizzabile')">
+                        Magazzino<br><small>150 m² (15×10m)</small>
                     </button>
-                    <button class="option-btn" onclick="quickSaturation(3, 3, 2.2, 'aerosol')">
-                        Ripostiglio<br><small>3×3×2.2m</small>
+                    <button class="option-btn" onclick="quickSaturation(9, 2.2, 'aerosol')">
+                        Ripostiglio<br><small>9 m² (3×3m)</small>
                     </button>
                 </div>
             </div>
             
-            <!-- Form compatto -->
             <div class="compact-form">
                 <h4><i class="fas fa-sliders-h"></i> Dimensioni Personalizzate</h4>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="room-length">
-                            <i class="fas fa-ruler-horizontal"></i> Lunghezza (m):
+                        <label for="room-area">
+                            <i class="fas fa-border-style"></i> Superficie (m²):
                         </label>
-                        <input type="number" id="room-length" step="0.1" min="0" placeholder="es. 10">
-                    </div>
-                    <div class="form-group">
-                        <label for="room-width">
-                            <i class="fas fa-ruler-vertical"></i> Larghezza (m):
-                        </label>
-                        <input type="number" id="room-width" step="0.1" min="0" placeholder="es. 5">
+                        <input type="number" id="room-area" step="0.1" min="0" placeholder="es. 50" oninput="calculateSaturationVolume()">
                     </div>
                     <div class="form-group">
                         <label for="room-height">
                             <i class="fas fa-arrows-alt-v"></i> Altezza (m):
                         </label>
-                        <input type="number" id="room-height" step="0.1" min="0" placeholder="es. 3">
+                        <input type="number" id="room-height" step="0.1" min="0" placeholder="es. 3" oninput="calculateSaturationVolume()">
+                        <div class="quick-percentages">
+                            <button class="quick-btn" onclick="setHeight(2.4)">2.4m</button>
+                            <button class="quick-btn" onclick="setHeight(2.7)">2.7m</button>
+                            <button class="quick-btn" onclick="setHeight(3)">3m</button>
+                            <button class="quick-btn" onclick="setHeight(4)">4m</button>
+                        </div>
                     </div>
+                </div>
+                <div class="volume-display">
+                    <strong><i class="fas fa-cube"></i> Volume calcolato:</strong> 
+                    <span id="saturation-volume-display">0 m³</span>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="saturation-product">
-                            <i class="fas fa-spray-can"></i> Tipo prodotto:
+                            <i class="fas fa-spray-can"></i> Prodotto:
                         </label>
-                        <select id="saturation-product">
-                            <option value="aerosol">Aerosol (15-20 ml/m³)</option>
-                            <option value="nebulizzabile">Nebulizzabile (10-15 ml/m³)</option>
-                            <option value="custom">Personalizzato</option>
-                        </select>
+                        <select id="saturation-product"></select>
                     </div>
                 </div>
                 <button class="calculate-btn" onclick="calculateSaturation()">
@@ -247,12 +217,13 @@
                 </button>
             </div>
             
-            <div class="safety-checklist" id="safety-checklist" style="display: none;">
+            <div class="safety-checklist" id="safety-checklist">
                 <h3><i class="fas fa-shield-alt"></i> Checklist di Sicurezza:</h3>
                 <label><input type="checkbox"> <i class="fas fa-door-closed"></i> Sigillare tutte le aperture</label>
                 <label><input type="checkbox"> <i class="fas fa-hard-hat"></i> Indossare DPI adeguati</label>
                 <label><input type="checkbox"> <i class="fas fa-users"></i> Rimuovere persone e animali</label>
-                <label><input type="checkbox"> <i class="fas fa-clock"></i> Impostare timer per ventilazione (4-6 ore)</label>
+                <label><input type="checkbox"> <i class="fas fa-wind"></i> Ventilare dopo 4-6 ore</label>
+                <label><input type="checkbox"> <i class="fas fa-ban"></i> Non fumare durante l'applicazione</label>
             </div>
         </div>
 
@@ -264,6 +235,12 @@
                 </button>
                 <h2><i class="fas fa-cloud"></i> Fumigazione</h2>
             </div>
+            
+            <div class="warning">
+                <strong><i class="fas fa-exclamation-triangle"></i> AVVERTENZA:</strong> 
+                Operazione pericolosa! Solo per operatori certificati. Utilizzare DPI completi.
+            </div>
+            
             <div class="form-group">
                 <label for="fumigation-type">
                     <i class="fas fa-cogs"></i> Tipo di calcolo:
@@ -273,60 +250,84 @@
                     <option value="weight">Per peso merce (tonnellate)</option>
                 </select>
             </div>
-            <div id="volume-inputs" class="dimensions-grid">
-                <div class="form-group">
-                    <label for="fum-length">
-                        <i class="fas fa-ruler-horizontal"></i> Lunghezza (m):
-                    </label>
-                    <input type="number" id="fum-length" step="0.1" min="0" placeholder="es. 10">
-                </div>
-                <div class="form-group">
-                    <label for="fum-width">
-                        <i class="fas fa-ruler-vertical"></i> Larghezza (m):
-                    </label>
-                    <input type="number" id="fum-width" step="0.1" min="0" placeholder="es. 5">
-                </div>
-                <div class="form-group">
-                    <label for="fum-height">
-                        <i class="fas fa-arrows-alt-v"></i> Altezza (m):
-                    </label>
-                    <input type="number" id="fum-height" step="0.1" min="0" placeholder="es. 3">
+            
+            <div id="volume-inputs">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fum-area">
+                            <i class="fas fa-border-style"></i> Superficie (m²):
+                        </label>
+                        <input type="number" id="fum-area" step="0.1" min="0" placeholder="es. 50" oninput="calculateFumigationVolume()">
+                    </div>
+                    <div class="form-group">
+                        <label for="fum-height">
+                            <i class="fas fa-arrows-alt-v"></i> Altezza (m):
+                        </label>
+                        <input type="number" id="fum-height" step="0.1" min="0" placeholder="es. 3" oninput="calculateFumigationVolume()">
+                        <div class="quick-percentages">
+                            <button class="quick-btn" onclick="setHeight(2.4)">2.4m</button>
+                            <button class="quick-btn" onclick="setHeight(3)">3m</button>
+                            <button class="quick-btn" onclick="setHeight(4)">4m</button>
+                        </div>
+                    </div>
                 </div>
             </div>
+            
             <div id="weight-inputs" style="display: none;">
                 <div class="form-group">
                     <label for="product-weight">
                         <i class="fas fa-weight"></i> Peso merce (tonnellate):
                     </label>
-                    <input type="number" id="product-weight" step="0.1" min="0" placeholder="es. 25">
+                    <input type="number" id="product-weight" step="0.1" min="0" placeholder="es. 25" oninput="calculateFumigationVolume()">
+                    <p class="info-text"><i class="fas fa-info-circle"></i> 1 tonnellata ≈ 1.5 m³ di volume</p>
                 </div>
             </div>
+            
+            <div class="volume-display">
+                <strong><i class="fas fa-cube"></i> Volume calcolato:</strong> 
+                <span id="fumigation-volume-display">0 m³</span>
+            </div>
+            
             <div class="form-group">
                 <label for="fumigant">
                     <i class="fas fa-vial"></i> Fumigante:
                 </label>
-                <select id="fumigant">
-                    <option value="fosfina">Fosfina (1-2 g/m³, 24-72h)</option>
-                    <option value="bromuro">Bromuro di metile (20-40 g/m³, 12-24h)</option>
-                    <option value="custom">Personalizzato</option>
-                </select>
+                <select id="fumigant"></select>
             </div>
+            
             <div class="form-group">
                 <label for="exposure-time">
                     <i class="fas fa-stopwatch"></i> Tempo esposizione (ore):
                 </label>
                 <input type="number" id="exposure-time" min="1" max="168" value="48" placeholder="48">
+                <div class="quick-percentages">
+                    <button class="quick-btn" onclick="setExposure(24)">24h</button>
+                    <button class="quick-btn" onclick="setExposure(48)">48h</button>
+                    <button class="quick-btn" onclick="setExposure(72)">72h</button>
+                </div>
             </div>
+            
             <button class="calculate-btn" onclick="calculateFumigation()">
                 <i class="fas fa-calculator"></i> Calcola Fumigazione
             </button>
+            
             <div class="result" id="fumigation-result"></div>
+            
             <div class="timer-section" id="timer-section" style="display: none;">
                 <h3><i class="fas fa-timer"></i> Timer Esposizione</h3>
                 <div class="timer-display" id="timer-display">00:00:00</div>
                 <button class="timer-btn" id="timer-btn" onclick="toggleTimer()">
                     <i class="fas fa-play"></i> Avvia Timer
                 </button>
+            </div>
+            
+            <div class="safety-checklist">
+                <h3><i class="fas fa-skull-crossbones"></i> Precauzioni Obbligatorie:</h3>
+                <label><input type="checkbox"> <i class="fas fa-mask"></i> Autorespiratore certificato</label>
+                <label><input type="checkbox"> <i class="fas fa-exclamation-triangle"></i> Area isolata e segnalata</label>
+                <label><input type="checkbox"> <i class="fas fa-gas-pump"></i> Rilevatore di gas installato</label>
+                <label><input type="checkbox"> <i class="fas fa-user-md"></i> Kit di primo soccorso disponibile</label>
+                <label><input type="checkbox"> <i class="fas fa-phone"></i> Piano di emergenza comunicato</label>
             </div>
         </div>
 
@@ -338,36 +339,106 @@
                 </button>
                 <h2><i class="fas fa-flask"></i> Gestione Prodotti</h2>
             </div>
+            
             <div class="product-form">
-                <h3><i class="fas fa-plus"></i> Aggiungi Nuovo Prodotto</h3>
-                <div class="form-group">
-                    <label for="new-product-name">
-                        <i class="fas fa-tag"></i> Nome prodotto:
-                    </label>
-                    <input type="text" id="new-product-name" placeholder="es. Lambda-cialotrina 10%">
+                <h3><i class="fas fa-plus-circle"></i> Aggiungi Nuovo Prodotto</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="new-product-name">
+                            <i class="fas fa-tag"></i> Nome prodotto:
+                        </label>
+                        <input type="text" id="new-product-name" placeholder="es. Lambda-cialotrina 10%">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="new-product-type">
+                            <i class="fas fa-bug"></i> Tipo prodotto:
+                        </label>
+                        <select id="new-product-type">
+                            <option value="insetticida">Insetticida</option>
+                            <option value="rodenticida">Rodenticida</option>
+                            <option value="fumigante">Fumigante</option>
+                            <option value="disinfettante">Disinfettante</option>
+                            <option value="altro">Altro</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="new-product-concentration">
-                        <i class="fas fa-percentage"></i> Concentrazione (%):
-                    </label>
-                    <input type="number" id="new-product-concentration" step="0.1" min="0" max="100" placeholder="es. 10">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="new-product-formulation">
+                            <i class="fas fa-prescription-bottle"></i> Formulazione:
+                        </label>
+                        <select id="new-product-formulation">
+                            <option value="liquido">Liquido</option>
+                            <option value="polvere">Polvere</option>
+                            <option value="granulare">Granulare</option>
+                            <option value="aerosol">Aerosol</option>
+                            <option value="gel">Gel</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="new-product-concentration">
+                            <i class="fas fa-percentage"></i> Concentrazione (%):
+                        </label>
+                        <input type="number" id="new-product-concentration" step="0.1" min="0" max="100" placeholder="es. 10">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="new-product-dilution">
-                        <i class="fas fa-tint"></i> Diluizione raccomandata (%):
-                    </label>
-                    <input type="number" id="new-product-dilution" step="0.01" min="0" max="10" placeholder="es. 0.75">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="new-product-dilution">
+                            <i class="fas fa-tint"></i> Diluizione standard (%):
+                        </label>
+                        <input type="number" id="new-product-dilution" step="0.01" min="0" max="10" placeholder="es. 0.5">
+                        <div class="field-suggestions">
+                            <button type="button" class="suggestion-btn" onclick="setDilution(0.25)">0.25%</button>
+                            <button type="button" class="suggestion-btn" onclick="setDilution(0.5)">0.5%</button>
+                            <button type="button" class="suggestion-btn" onclick="setDilution(0.75)">0.75%</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="new-product-price">
+                            <i class="fas fa-euro-sign"></i> Prezzo per litro/kg (€):
+                        </label>
+                        <input type="number" id="new-product-price" step="0.01" min="0" placeholder="es. 25.50">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="new-product-price">
-                        <i class="fas fa-euro-sign"></i> Prezzo per litro (€):
-                    </label>
-                    <input type="number" id="new-product-price" step="0.01" min="0" placeholder="es. 25.50">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="new-product-saturation-dose">
+                            <i class="fas fa-spray-can"></i> Dosaggio saturazione (ml/m³):
+                        </label>
+                        <input type="number" id="new-product-saturation-dose" step="0.1" min="0" placeholder="es. 15">
+                        <div class="field-suggestions">
+                            <button type="button" class="suggestion-btn" onclick="setSaturationDose(10)">10</button>
+                            <button type="button" class="suggestion-btn" onclick="setSaturationDose(15)">15</button>
+                            <button type="button" class="suggestion-btn" onclick="setSaturationDose(20)">20</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="new-product-fumigant-dose">
+                            <i class="fas fa-cloud"></i> Dosaggio fumigazione (g/m³):
+                        </label>
+                        <input type="number" id="new-product-fumigant-dose" step="0.1" min="0" placeholder="es. 2">
+                        <div class="field-suggestions">
+                            <button type="button" class="suggestion-btn" onclick="setFumigantDose(1)">1</button>
+                            <button type="button" class="suggestion-btn" onclick="setFumigantDose(2)">2</button>
+                            <button type="button" class="suggestion-btn" onclick="setFumigantDose(3)">3</button>
+                        </div>
+                    </div>
                 </div>
+
                 <button class="calculate-btn" onclick="addCustomProduct()">
                     <i class="fas fa-plus"></i> Aggiungi Prodotto
                 </button>
             </div>
+            
             <div class="products-list">
                 <h3><i class="fas fa-list"></i> Prodotti Salvati</h3>
                 <div id="custom-products-list"></div>
