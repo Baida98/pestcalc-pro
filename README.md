@@ -15,3 +15,5 @@ Web app professionale per disinfestatori. Calcola facilmente:
 4. Il sito sarà disponibile al link indicato
 
 ✅ Nessun backend, completamente statico, compatibile con mobile.
+
+https://baida98.github.io/pestcalc-pro/
