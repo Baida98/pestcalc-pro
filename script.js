@@ -1,246 +1,274 @@
-// -- Utility base per XSS --
-function sanitizeHtml(str) {
-    if (typeof str !== 'string') return str;
-    return str.replace(/[&<>"'`]/g, (m) =>
-        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[m])
-    );
-}
-
-// -- Dati locali --
-let customProducts = [];
+// ==================== DATABASE E VARIABILI GLOBALI ====================
+let customProducts;
 try {
     customProducts = JSON.parse(localStorage.getItem('pestcalc_custom_products')) || [];
     if (!Array.isArray(customProducts)) customProducts = [];
-} catch { customProducts = []; }
+} catch (e) { customProducts = []; }
+
 let calculationHistory = JSON.parse(localStorage.getItem('pestcalc_history')) || [];
+let previousSection = null;
+let fumigationTimer = null;
+let timerStartTime = parseInt(localStorage.getItem('pestcalc_timerStartTime')) || null;
+let timerDuration = parseInt(localStorage.getItem('pestcalc_timerDuration')) || 0;
 let lastCalculatedQuantity = 0;
 
-// -- Navigazione semplificata --
-function showSection(id) {
-    document.querySelectorAll('.calculator-section, .main-menu').forEach(s => s.style.display = 'none');
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'block';
-    document.querySelector('.app-header').style.display = id === 'main-menu' ? 'block' : 'none';
+// ==================== NAVIGAZIONE SEZIONI ====================
+function hideAllSections() {
+    document.querySelectorAll('.calculator-section, .main-menu').forEach(sec => sec.style.display = 'none');
 }
 
-// -- Select prodotti, automatico e universale --
-function updateProductSelect(selectId) {
+function showMainMenu() {
+    hideAllSections();
+    document.getElementById('main-menu').style.display = 'block';
+    document.querySelector('.app-header').style.display = 'block';
+    previousSection = null;
+}
+
+function showSection(section) {
+    hideAllSections();
+    document.getElementById(section).style.display = 'block';
+    document.querySelector('.app-header').style.display = section === 'main-menu' ? 'block' : 'none';
+    previousSection = section;
+    updateAllSelects();
+}
+
+function returnToPreviousSection() {
+    if (previousSection) showSection(previousSection);
+    else showMainMenu();
+}
+
+// ==================== SELECTS ====================
+function updateSelect(selectId, includeCustom = true, defaultOption = 'Seleziona...') {
     const select = document.getElementById(selectId);
     if (!select) return;
-    let html = `<option value="">Manuale/Personalizzato</option>`;
-    customProducts.forEach(p => html += `<option value="${p.id}">${sanitizeHtml(p.name)}</option>`);
+    let html = `<option value="">${defaultOption}</option>`;
+    customProducts.forEach((p, idx) => html += `<option value="${idx}">${p.name}</option>`);
+    if (includeCustom) html += `<option value="custom">Personalizzato</option>`;
     select.innerHTML = html;
 }
 
-// -- DILUIZIONE --
+function updateAllSelects() {
+    ['product-select','saturation-product','fumigant','cost-product'].forEach(updateSelect);
+}
+
+// ==================== FUNZIONI SUPPORTO ====================
+function showError(element, message) {
+    const el = element || document.body;
+    const toast = document.createElement('div');
+    toast.className = 'toast error';
+    toast.textContent = message;
+    el.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+function showSuccess(element, message) {
+    const el = element || document.body;
+    const toast = document.createElement('div');
+    toast.className = 'toast success';
+    toast.textContent = message;
+    el.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+// ==================== GESTIONE PRODOTTI PERSONALIZZATI ====================
+function addCustomProduct() {
+    const name = document.getElementById('new-product-name').value.trim();
+    const type = document.getElementById('new-product-type').value;
+    const formulation = document.getElementById('new-product-formulation').value;
+    const concentration = parseFloat(document.getElementById('new-product-concentration').value);
+    const dilution = parseFloat(document.getElementById('new-product-dilution').value);
+    const price = parseFloat(document.getElementById('new-product-price').value);
+    const saturationDose = parseFloat(document.getElementById('new-product-saturation-dose').value);
+    const fumigantDose = parseFloat(document.getElementById('new-product-fumigant-dose').value);
+    const addBtn = document.querySelector('.calculate-btn');
+
+    if (!name || name.length < 3) return showError(addBtn,'Il nome deve essere di almeno 3 caratteri');
+    if (!concentration || concentration <=0 || concentration>100) return showError(addBtn,'La concentrazione deve essere tra 0.1% e 100%');
+    if (!dilution || dilution <=0 || dilution>10) return showError(addBtn,'La diluizione deve essere tra 0.01% e 10%');
+    if (price && price<=0) return showError(addBtn,'Il prezzo deve essere positivo');
+    if (saturationDose && saturationDose<=0) return showError(addBtn,'Dosaggio saturazione positivo richiesto');
+    if (fumigantDose && fumigantDose<=0) return showError(addBtn,'Dosaggio fumigante positivo richiesto');
+
+    const newProduct = { id: Date.now(), name, type, formulation, concentration, recommendedDilution:dilution, price:price||0, saturationDose:saturationDose||null, fumigantDose:fumigantDose||null, custom:true };
+
+    addBtn.classList.add('loading'); addBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Aggiungendo...';
+    setTimeout(()=>{
+        customProducts.push(newProduct);
+        localStorage.setItem('pestcalc_custom_products',JSON.stringify(customProducts));
+        ['new-product-name','new-product-concentration','new-product-dilution','new-product-price','new-product-saturation-dose','new-product-fumigant-dose'].forEach(id=>document.getElementById(id).value='');
+        updateAllSelects();
+        addBtn.classList.remove('loading'); addBtn.innerHTML='<i class="fas fa-plus"></i> Aggiungi Prodotto';
+        showSuccess(addBtn,'✅ Prodotto aggiunto!');
+    },600);
+}
+
+function deleteCustomProduct(idx) {
+    if(confirm('Sei sicuro di eliminare questo prodotto?')){
+        customProducts.splice(idx,1);
+        localStorage.setItem('pestcalc_custom_products',JSON.stringify(customProducts));
+        updateAllSelects();
+    }
+}
+
+// ==================== CALCOLI ====================
+// --- Diluizione ---
 function calculateDilution() {
-    const productId = document.getElementById('product-select').value;
+    const productIdx = document.getElementById('product-select').value;
     const percentage = parseFloat(document.getElementById('dilution-percentage').value);
     const volume = parseFloat(document.getElementById('solution-volume').value);
     const unit = document.getElementById('volume-unit').value;
-    const btn = document.getElementById('dilution-calc-btn');
+    const calcBtn = document.querySelector('#dilution-calc .calculate-btn');
+    if(!productIdx) return showError(calcBtn,'Seleziona un prodotto');
+    if(!percentage||!volume) return showError(calcBtn,'Inserisci tutti i valori');
+    if(percentage>10) showError(calcBtn,'⚠️ Percentuale molto alta!');
 
-    if (!Number.isFinite(percentage) || percentage <= 0) return showToast('Inserisci una percentuale valida','error');
-    if (!Number.isFinite(volume) || volume <= 0) return showToast('Inserisci un volume valido','error');
-
-    let product = null, productName = 'Prodotto personalizzato', recDil = 10;
-    if (productId) {
-        product = customProducts.find(p => String(p.id) === String(productId));
-        if (product) { productName = product.name; recDil = product.recommendedDilution || 10;}
-    }
-    const volumeL = unit === 'L' ? volume : volume / 1000;
-    const concentrate = (percentage / 100) * volumeL * 1000;
-    lastCalculatedQuantity = concentrate;
-
-    document.getElementById('dilution-result').innerHTML = `
-      <h3>Risultato Diluizione</h3>
-      <div>Aggiungi <b>${concentrate.toFixed(1)} ml</b> di ${sanitizeHtml(productName)} a <b>${volume} ${unit}</b> di acqua</div>
-      ${percentage > recDil ? '<div class="warning">Concentrazione superiore a quella raccomandata</div>' : ''}
-    `;
-    showToast('✅ Calcolo effettuato!','success');
-    saveCalculation('Diluizione', {
-        prodotto: productName,
-        percentuale: percentage + '%',
-        volume: volume + ' ' + unit,
-        concentrato: concentrate.toFixed(1) + ' ml'
-    });
+    calcBtn.classList.add('loading'); calcBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Calcolando...';
+    setTimeout(()=>{
+        const volumeLitri = unit==='L'?volume:volume/1000;
+        const concentrateML = (percentage/100)*volumeLitri*1000;
+        lastCalculatedQuantity = concentrateML;
+        const product = customProducts[productIdx];
+        const productName = product?product.name:'Prodotto personalizzato';
+        const result = document.getElementById('dilution-result');
+        result.innerHTML=`
+            <h3><i class="fas fa-check-circle"></i> Risultato</h3>
+            <div>Aggiungi <strong>${concentrateML.toFixed(1)} ml</strong> di ${productName} a <strong>${volume} ${unit}</strong> di acqua</div>
+        `;
+        calcBtn.classList.remove('loading'); calcBtn.innerHTML='<i class="fas fa-calculator"></i> Calcola Diluizione';
+        saveCalculation('Diluizione',{product:productName,percentage:percentage+'%',volume:volume+' '+unit,concentrate:concentrateML.toFixed(1)+' ml'});
+        showSuccess(calcBtn,'✅ Diluizione calcolata!');
+    },500);
 }
 
-// -- SATURAZIONE --
+// --- Saturazione ---
 function calculateSaturation() {
+    const productIdx = document.getElementById('saturation-product').value;
     const area = parseFloat(document.getElementById('room-area').value);
     const height = parseFloat(document.getElementById('room-height').value);
-    const productId = document.getElementById('saturation-product').value;
-    const dosage = parseFloat(document.getElementById('manual-saturation-dose').value);
-    const btn = document.getElementById('saturation-calc-btn');
+    const calcBtn = document.querySelector('#saturation-calc .calculate-btn');
+    if(!productIdx) return showError(calcBtn,'Seleziona prodotto');
+    if(!area||!height) return showError(calcBtn,'Inserisci area e altezza');
 
-    if (!Number.isFinite(area) || area <= 0 || !Number.isFinite(height) || height <= 0)
-        return showToast('Inserisci superficie e altezza valide','error');
-    let productName = 'Prodotto personalizzato', satDose = Number.isFinite(dosage) && dosage > 0 ? dosage : 15;
-    if (productId) {
-        const prod = customProducts.find(p => String(p.id) === String(productId));
-        if (prod) { productName = prod.name; if (Number.isFinite(prod.saturationDose)) satDose = prod.saturationDose; }
-    }
-    if (!Number.isFinite(satDose) || satDose <= 0) return showToast('Inserisci dosaggio valido (ml/m³)','error');
-    const volume = area * height;
-    const minProduct = (volume * satDose).toFixed(1);
-
-    document.getElementById('saturation-result').innerHTML = `
-      <h3>Risultato Saturazione</h3>
-      Volume: <b>${volume.toFixed(1)} m³</b><br>
-      Quantità: <b>${minProduct} ml</b> di ${sanitizeHtml(productName)}<br>
-      Dosaggio: <b>${satDose} ml/m³</b>
-    `;
-    showToast('✅ Calcolo effettuato!','success');
-    saveCalculation('Saturazione', {
-        ambiente: `${area} m² x ${height} m`,
-        volume: `${volume.toFixed(1)} m³`,
-        prodotto: productName,
-        dosaggio: `${satDose} ml/m³`,
-        quantità: `${minProduct} ml`
-    });
+    const product = customProducts[productIdx];
+    const volume = area*height;
+    const dose = product.saturationDose||0;
+    const total = volume*dose;
+    document.getElementById('saturation-result').textContent=`Volume stanza: ${volume.toFixed(1)} m³, Dosaggio totale: ${total.toFixed(1)} ml`;
+    saveCalculation('Saturazione',{product:product.name,area, height, volume:volume.toFixed(1)+' m³',dose:total.toFixed(1)+' ml'});
+    showSuccess(calcBtn,'✅ Saturazione calcolata!');
 }
 
-// -- FUMIGAZIONE --
+// --- Fumigazione ---
 function calculateFumigation() {
+    const fumIdx = document.getElementById('fumigant').value;
     const type = document.getElementById('fumigation-type').value;
-    let volume = 0;
-    if (type === 'volume') {
-        const area = parseFloat(document.getElementById('fum-area').value);
-        const height = parseFloat(document.getElementById('fum-height').value);
-        if (!Number.isFinite(area) || area <= 0 || !Number.isFinite(height) || height <= 0) return showToast('Superficie/altezza non valida','error');
-        volume = area * height;
-    } else {
-        const weight = parseFloat(document.getElementById('product-weight').value);
-        if (!Number.isFinite(weight) || weight <= 0) return showToast('Peso non valido','error');
-        volume = weight * 1.5;
+    const area = parseFloat(document.getElementById('fum-area').value)||0;
+    const height = parseFloat(document.getElementById('fum-height').value)||0;
+    const weight = parseFloat(document.getElementById('product-weight').value)||0;
+    const calcBtn = document.querySelector('#fumigation-calc .calculate-btn');
+    if(!fumIdx) return showError(calcBtn,'Seleziona fumigante');
+
+    const product = customProducts[fumIdx];
+    let volume=0;
+    if(type==='volume') volume=area*height;
+    else volume=weight*1.5;
+
+    const dose = product.fumigantDose||0;
+    const total = volume*dose;
+    document.getElementById('fumigation-result').textContent=`Volume calcolato: ${volume.toFixed(1)} m³, Dosaggio totale: ${total.toFixed(1)} ml`;
+    saveCalculation('Fumigazione',{product:product.name,volume:volume.toFixed(1)+' m³',dose:total.toFixed(1)+' ml'});
+    showSuccess(calcBtn,'✅ Fumigazione calcolata!');
+}
+
+// --- Calcolo costi ---
+function calculateCost() {
+    const productIdx = document.getElementById('cost-product').value;
+    const quantity = parseFloat(document.getElementById('cost-quantity').value);
+    const calcBtn = document.querySelector('#cost-calc .calculate-btn');
+    if(!productIdx) return showError(calcBtn,'Seleziona prodotto');
+    if(!quantity) return showError(calcBtn,'Inserisci quantità');
+
+    const product = customProducts[productIdx];
+    const price = product.price || 0;
+    const totalCost = price*quantity;
+    document.getElementById('cost-result').textContent=`Costo totale: €${totalCost.toFixed(2)}`;
+    saveCalculation('Costo',{product:product.name,quantity,total:totalCost.toFixed(2)+'€'});
+    showSuccess(calcBtn,'✅ Costo calcolato!');
+}
+
+// ==================== TIMER FUMIGAZIONE ====================
+function startFumigationTimer(durationSec) {
+    clearFumigationTimer();
+    timerStartTime = Date.now();
+    timerDuration = durationSec;
+    localStorage.setItem('pestcalc_timerStartTime',timerStartTime);
+    localStorage.setItem('pestcalc_timerDuration',timerDuration);
+
+    fumigationTimer=setInterval(()=>{
+        const elapsed = Math.floor((Date.now()-timerStartTime)/1000);
+        const remaining = Math.max(0,timerDuration-elapsed);
+        document.getElementById('fumigation-timer-display').textContent=formatTime(remaining);
+        if(remaining<=0){
+            clearFumigationTimer();
+            showSuccess(null,'✅ Fumigazione completata!');
+        }
+    },1000);
+}
+
+function clearFumigationTimer(){
+    if(fumigationTimer) clearInterval(fumigationTimer);
+    fumigationTimer=null;
+    localStorage.removeItem('pestcalc_timerStartTime');
+    localStorage.removeItem('pestcalc_timerDuration');
+    document.getElementById('fumigation-timer-display').textContent='00:00';
+}
+
+function formatTime(sec){
+    const m=String(Math.floor(sec/60)).padStart(2,'0');
+    const s=String(sec%60).padStart(2,'0');
+    return `${m}:${s}`;
+}
+
+// ==================== STORICO ====================
+function saveCalculation(type,details){
+    calculationHistory.unshift({id:Date.now(),type,details,date:new Date().toLocaleString()});
+    if(calculationHistory.length>100) calculationHistory.pop();
+    localStorage.setItem('pestcalc_history',JSON.stringify(calculationHistory));
+}
+
+function displayHistory(){
+    const container=document.getElementById('history-list');
+    if(!container) return;
+    container.innerHTML='';
+    calculationHistory.forEach(calc=>{
+        const el=document.createElement('div');
+        el.className='history-item';
+        el.innerHTML=`<div class="history-header"><strong>${calc.type}</strong> - ${calc.date}</div><div class="history-details">${JSON.stringify(calc.details)}</div>`;
+        container.appendChild(el);
+    });
+}
+
+// ==================== ESPORTAZIONE CSV ====================
+function exportHistoryCSV(){
+    if(!calculationHistory.length) return showError(null,'Nessun calcolo da esportare');
+    let csv='Tipo,Data,Dettagli\n';
+    calculationHistory.forEach(h=>{
+        const details=JSON.stringify(h.details).replace(/,/g,';');
+        csv+=`${h.type},${h.date},${details}\n`;
+    });
+    const blob=new Blob([csv],{type:'text/csv'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='pestcalc_history.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ==================== INIT ====================
+window.addEventListener('load',()=>{
+    updateAllSelects();
+    if(timerStartTime && timerDuration){
+        const elapsed=Math.floor((Date.now()-timerStartTime)/1000);
+        const remaining=Math.max(0,timerDuration-elapsed);
+        if(remaining>0) startFumigationTimer(remaining);
     }
-    const productId = document.getElementById('fumigant').value;
-    const dosage = parseFloat(document.getElementById('manual-fumigant-dose').value);
-    const exposureTime = parseInt(document.getElementById('exposure-time').value) || 48;
-    let productName = 'Prodotto personalizzato', fumDose = Number.isFinite(dosage) && dosage > 0 ? dosage : 2;
-    if (productId) {
-        const prod = customProducts.find(p => String(p.id) === String(productId));
-        if (prod) { productName = prod.name; if (Number.isFinite(prod.fumigantDose)) fumDose = prod.fumigantDose; }
-    }
-    if (!Number.isFinite(fumDose) || fumDose <= 0) return showToast('Inserisci dosaggio valido (g/m³)','error');
-    const total = (volume * fumDose).toFixed(1);
-
-    document.getElementById('fumigation-result').innerHTML = `
-      <h3>Risultato Fumigazione</h3>
-      Volume: <b>${volume.toFixed(1)} m³</b><br>
-      Quantità: <b>${total} g</b> di ${sanitizeHtml(productName)}<br>
-      Dosaggio: <b>${fumDose} g/m³</b>, Esposizione: <b>${exposureTime} h</b>
-    `;
-    showToast('✅ Calcolo effettuato!','success');
-    saveCalculation('Fumigazione', {
-        volume: `${volume.toFixed(1)} m³`,
-        fumigante: productName,
-        dosaggio: `${fumDose} g/m³`,
-        quantità: `${total} g`,
-        esposizione: `${exposureTime} h`
-    });
-}
-
-// -- GESTIONE PRODOTTI --
-function addCustomProduct() {
-    const name = document.getElementById('new-product-name').value.trim();
-    if (!name) return showToast('Nome obbligatorio','error');
-    const id = Date.now();
-    const product = {
-        id, name: sanitizeHtml(name),
-        recommendedDilution: parseFloat(document.getElementById('new-product-dilution').value) || null,
-        saturationDose: parseFloat(document.getElementById('new-product-saturation-dose').value) || null,
-        fumigantDose: parseFloat(document.getElementById('new-product-fumigant-dose').value) || null,
-        price: parseFloat(document.getElementById('new-product-price').value) || 0
-    };
-    customProducts.push(product);
-    localStorage.setItem('pestcalc_custom_products', JSON.stringify(customProducts));
-    document.getElementById('new-product-name').value = '';
-    document.getElementById('new-product-dilution').value = '';
-    document.getElementById('new-product-saturation-dose').value = '';
-    document.getElementById('new-product-fumigant-dose').value = '';
-    document.getElementById('new-product-price').value = '';
-    updateAllProductSelects();
-    displayCustomProducts();
-    showToast('Prodotto aggiunto','success');
-}
-function displayCustomProducts() {
-    const c = document.getElementById('custom-products-list');
-    if (!customProducts.length) return c.innerHTML = '<i>Nessun prodotto</i>';
-    c.innerHTML = customProducts.map((p,i) => `
-      <div>${sanitizeHtml(p.name)} 
-        <button onclick="deleteCustomProduct(${i})">🗑️</button>
-      </div>
-    `).join('');
-}
-function deleteCustomProduct(idx){
-    if (!confirm('Eliminare prodotto?')) return;
-    customProducts.splice(idx,1);
-    localStorage.setItem('pestcalc_custom_products', JSON.stringify(customProducts));
-    updateAllProductSelects(); displayCustomProducts();
-}
-
-// -- STORICO --
-function saveCalculation(type, data) {
-    calculationHistory.unshift({
-        id: Date.now(),
-        type, data,
-        timestamp: new Date().toLocaleString('it-IT')
-    });
-    if (calculationHistory.length > 100) calculationHistory = calculationHistory.slice(0,100);
-    localStorage.setItem('pestcalc_history', JSON.stringify(calculationHistory));
-}
-function displayHistory() {
-    const h = document.getElementById('history-list');
-    if (!calculationHistory.length) return h.innerHTML = '<i>Nessun calcolo salvato</i>';
-    h.innerHTML = calculationHistory.map(calc => `
-      <div>
-        <b>${sanitizeHtml(calc.type)}</b> — ${sanitizeHtml(calc.timestamp)}<br>
-        ${Object.entries(calc.data).map(([k,v])=>`${sanitizeHtml(k)}: ${sanitizeHtml(v)}`).join('<br>')}
-      </div>
-    `).join('<hr>');
-}
-function clearHistory() {
-    if (!confirm('Svuotare lo storico?')) return;
-    calculationHistory = [];
-    localStorage.removeItem('pestcalc_history');
-    displayHistory();
-    showToast('Storico svuotato','success');
-}
-
-// -- UI, Notifiche, inizializzazione --
-function showToast(msg, type='info') {
-    const t = document.createElement('div');
-    t.className = `toast toast-${type}`;
-    t.setAttribute('role','alert');
-    t.textContent = msg;
-    Object.assign(t.style, {position:'fixed',top:'20px',right:'20px',background:'#333',color:'#fff',padding:'10px',borderRadius:'8px',zIndex:10000});
-    document.body.appendChild(t); setTimeout(()=>{t.remove();},2200);
-}
-
-function updateAllProductSelects() {
-    updateProductSelect('product-select');
-    updateProductSelect('saturation-product');
-    updateProductSelect('fumigant');
-    updateProductSelect('cost-product');
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    showSection('main-menu');
-    updateAllProductSelects();
-    displayCustomProducts();
-    displayHistory();
-
-    document.getElementById('room-area')?.addEventListener('input', e=>{
-        const area = parseFloat(e.target.value), height = parseFloat(document.getElementById('room-height').value);
-        document.getElementById('saturation-volume-display').textContent = (area>0&&height>0)?(area*height).toFixed(1)+' m³':'0 m³';
-    });
-    document.getElementById('room-height')?.addEventListener('input', e=>{
-        const area = parseFloat(document.getElementById('room-area').value), height = parseFloat(e.target.value);
-        document.getElementById('saturation-volume-display').textContent = (area>0&&height>0)?(area*height).toFixed(1)+' m³':'0 m³';
-    });
-    document.getElementById('fum-area')?.addEventListener('input',()=>{ /* volume live update */ });
-    document.getElementById('fum-height')?.addEventListener('input',()=>{ /* volume live update */ });
-    document.getElementById('product-weight')?.addEventListener('input',()=>{ /* volume live update */ });
 });
