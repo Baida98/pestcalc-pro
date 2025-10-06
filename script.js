@@ -72,9 +72,7 @@ function removeCustomProduct(idx) {
 
 // == Inizializzazione e Menu ==
 window.addEventListener('DOMContentLoaded', () => {
-  displayCustomProducts();
-  // ... setup menu e altre sezioni come già presente (showMainMenu, showCalculator ecc)
-  // ... popola menu principale dinamicamente qui
+  // Menu principale dinamico
   document.getElementById('main-menu').innerHTML = `
     <button class="menu-btn" onclick="showCalculator('dilution')"><i class="fas fa-tint"></i> Calcolo Diluizione</button>
     <button class="menu-btn" onclick="showCalculator('saturation')"><i class="fas fa-home"></i> Saturazione Ambientale</button>
@@ -83,5 +81,65 @@ window.addEventListener('DOMContentLoaded', () => {
     <button class="menu-btn" onclick="showHistory()"><i class="fas fa-history"></i> Storico Calcoli</button>
     <button class="menu-btn" onclick="showCalculator('cost')"><i class="fas fa-calculator"></i> Calcolo Costi</button>
   `;
+
+  // Sezione Gestione Prodotti
+  document.getElementById('products-section').innerHTML = `
+    <div class="calc-header">
+      <button class="back-btn" onclick="showMainMenu()"><i class="fas fa-arrow-left"></i> Indietro</button>
+      <h2><i class="fas fa-flask"></i> Gestione Prodotti</h2>
+    </div>
+    <div class="product-form">
+      <h3><i class="fas fa-plus-circle"></i> Aggiungi Nuovo Prodotto</h3>
+      <input type="text" id="new-product-name" placeholder="Nome prodotto (es. Lambda-cialotrina 10%)">
+      <select id="new-product-type">
+        <option value="insetticida">Insetticida</option>
+        <option value="rodenticida">Rodenticida</option>
+        <option value="fumigante">Fumigante</option>
+        <option value="disinfettante">Disinfettante</option>
+        <option value="altro">Altro</option>
+      </select>
+      <select id="new-product-formulation">
+        <option value="liquido">Liquido</option>
+        <option value="polvere">Polvere</option>
+        <option value="granulare">Granulare</option>
+        <option value="aerosol">Aerosol</option>
+        <option value="gel">Gel</option>
+      </select>
+      <input type="number" id="new-product-concentration" step="0.1" min="0" max="100" placeholder="Concentrazione (%)">
+      <input type="number" id="new-product-dilution" step="0.01" min="0" max="10" placeholder="Diluizione standard (%)">
+      <input type="number" id="new-product-price" step="0.01" min="0" placeholder="Prezzo per litro/kg (€)">
+      <input type="number" id="new-product-saturation-dose" step="0.1" min="0" placeholder="Dosaggio saturazione (ml/m³)">
+      <input type="number" id="new-product-fumigant-dose" step="0.1" min="0" placeholder="Dosaggio fumigazione (g/m³)">
+      <button class="calculate-btn" onclick="addCustomProduct()"><i class="fas fa-plus"></i> Aggiungi Prodotto</button>
+    </div>
+    <div class="products-list">
+      <h3><i class="fas fa-list"></i> Prodotti Salvati</h3>
+      <div id="custom-products-list"></div>
+    </div>
+  `;
+  displayCustomProducts();
 });
-// ... Il resto delle funzioni di calcolo, storico ecc. come già esistenti, ma assicurati di chiamare sempre displayCustomProducts() quando serve aggiornare la lista.
+
+// == Navigazione Base ==
+function showMainMenu() {
+  hideAllSections();
+  document.getElementById('main-menu').style.display = 'flex';
+}
+function showCalculator(type) {
+  hideAllSections();
+  document.getElementById(`${type}-calc`).style.display = 'block';
+}
+function showProducts() {
+  hideAllSections();
+  document.getElementById('products-section').style.display = 'block';
+  displayCustomProducts();
+}
+function showHistory() {
+  hideAllSections();
+  document.getElementById('history-section').style.display = 'block';
+}
+function hideAllSections() {
+  document.querySelectorAll('.calculator-section, .main-menu').forEach(s => s.style.display = 'none');
+}
+
+// (Qui puoi integrare le tue funzioni di calcolo, storico, PDF, ecc.)
