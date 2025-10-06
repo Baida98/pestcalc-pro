@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PestCalc Pro - Abbonamento Premium</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1><i class="fas fa-crown"></i> PestCalc Pro Premium</h1>
+      <p>Accedi a tutte le funzionalità avanzate</p>
+      <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Torna all'app</a>
+    </header>
+    <main style="padding: 20px; text-align:center;">
+      <h2>Versione Premium</h2>
+      <ul style="list-style:none; padding:0; margin:20px 0;">
+        <li>✔ Storico calcoli illimitato</li>
+        <li>✔ Report PDF per i clienti</li>
+        <li>✔ Database prodotti ampliato</li>
+        <li>✔ Calcolo costi avanzato</li>
+      </ul>
+      <h3 style="margin:20px 0;">Solo <strong>5€ al mese</strong></h3>
+      <button id="checkout-button" class="calculate-btn">
+        <i class="fas fa-crown"></i> Abbonati a PestCalc Pro Premium
+      </button>
+    </main>
+  </div>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script>
+    const stripe = Stripe("CHIAVE_PUBBLICA_STRIPE");
+    document.getElementById("checkout-button").addEventListener("click", function () {
+      stripe.redirectToCheckout({
+        lineItems: [{
+          price: "ID_PREZZO_5_EURO",
+          quantity: 1
+        }],
+        mode: "subscription",
+        successUrl: window.location.origin + "/success.html",
+        cancelUrl: window.location.origin + "/cancel.html"
+      });
+    });
+  </script>
+</body>
+</html>
